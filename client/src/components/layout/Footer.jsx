@@ -40,7 +40,7 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-bold mb-4">Контакты</h3>
             <ul className="space-y-2 text-gray-400">
-              <li>Email: info@3dprintlab.ru</li>
+              <li>Email: i43231360@gmail.com</li>
               <li>Телефон: +7 (XXX) XXX-XX-XX</li>
               <li>Адрес: г. Москва</li>
             </ul>
