@@ -10,16 +10,20 @@
     "deploy": "vite build && cd dist && git init && git branch -M gh-pages && git remote add origin https://github.com/xBezumiex/3d_printer_site.git && git add . && git commit -m 'Deploy React site' && git push -f origin gh-pages"
   },
   "dependencies": {
+    "axios": "^1.13.5",
+    "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "three": "^0.160.0",
-    "lucide-react": "^0.263.1"
+    "react-hook-form": "^7.71.1",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.13.0",
+    "three": "^0.160.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.0.0",
-    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
-    "autoprefixer": "^10.4.16"
+    "tailwindcss": "^3.4.0",
+    "vite": "^5.0.0"
   }
 }
