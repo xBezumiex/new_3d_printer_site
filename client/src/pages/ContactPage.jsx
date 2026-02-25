@@ -3,15 +3,17 @@ import { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const YOUR_EMAIL = 'i43231360@gmail.com';
+
 const CONTACTS = [
-  { icon: MapPin, label: 'Адрес',       value: 'г. Москва, ул. Мастеров, д. 12, стр. 3', link: null },
-  { icon: Phone,  label: 'Телефон',     value: '+7 (495) 123-45-67', link: 'tel:+74951234567' },
-  { icon: Mail,   label: 'Email',       value: 'info@3dprintlab.ru', link: 'mailto:info@3dprintlab.ru' },
+  { icon: MapPin, label: 'Адрес',   value: 'г. Москва, ул. Мастеров, д. 12, стр. 3', link: null },
+  { icon: Phone,  label: 'Телефон', value: '+7 (495) 123-45-67', link: 'tel:+74951234567' },
+  { icon: Mail,   label: 'Email',   value: YOUR_EMAIL, link: `mailto:${YOUR_EMAIL}` },
 ];
 
 const HOURS = [
-  { days: 'Пн–Пт', time: '09:00 – 20:00' },
-  { days: 'Суббота', time: '10:00 – 18:00' },
+  { days: 'Пн–Пт',      time: '09:00 – 20:00' },
+  { days: 'Суббота',     time: '10:00 – 18:00' },
   { days: 'Воскресенье', time: 'Выходной' },
 ];
 
@@ -27,11 +29,31 @@ export default function ContactPage() {
       return;
     }
     setSending(true);
-    // Имитация отправки (реальная отправка — через email API)
-    await new Promise(r => setTimeout(r, 1200));
-    setSent(true);
-    setSending(false);
-    toast.success('Сообщение отправлено!');
+    try {
+      const res = await fetch(`https://formsubmit.co/ajax/${YOUR_EMAIL}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone || 'не указан',
+          message: form.message,
+          _subject: `Новое сообщение с сайта 3D Print Lab от ${form.name}`,
+          _captcha: 'false',
+        }),
+      });
+      const data = await res.json();
+      if (data.success === 'true' || data.success === true) {
+        setSent(true);
+        toast.success('Сообщение отправлено!');
+      } else {
+        throw new Error('fail');
+      }
+    } catch {
+      toast.error('Не удалось отправить. Напишите напрямую на ' + YOUR_EMAIL);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
