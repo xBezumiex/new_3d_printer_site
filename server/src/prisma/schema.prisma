@@ -1,0 +1,323 @@
+// Prisma schema для 3D Print Lab
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ПОЛЬЗОВАТЕЛИ
+// ============================================
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  phone         String?
+  avatar        String?  // URL Cloudinary
+  bio           String?  @db.Text
+  role          Role     @default(USER)
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Отношения
+  orders        Order[]
+  posts         Post[]
+  comments      Comment[]
+  courseProgress CourseProgress[]
+  subscriptions Subscription[] @relation("UserSubscriptions")
+  subscribers   Subscription[] @relation("SubscribedTo")
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ============================================
+// ЗАКАЗЫ
+// ============================================
+model Order {
+  id            String      @id @default(uuid())
+  orderNumber   Int         @unique @default(autoincrement())
+
+  // Пользователь
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Параметры модели
+  modelFile     String?     // URL загруженного файла (Cloudinary)
+  material      Material    @default(PLA)
+  quality       Quality     @default(STANDARD)
+  infill        Int         @default(20) // %
+  quantity      Int         @default(1)
+  volume        Float       // см³
+  weight        Float       // грамм
+
+  // Цена
+  price         Float       // рублей
+
+  // Статус
+  status        OrderStatus @default(PENDING)
+
+  // Комментарий клиента
+  comments      String?     @db.Text
+
+  // Timestamps
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("orders")
+  @@index([userId])
+  @@index([status])
+}
+
+enum Material {
+  PLA
+  ABS
+  PETG
+  TPU
+  NYLON
+}
+
+enum Quality {
+  DRAFT       // 0.3mm
+  STANDARD    // 0.2mm
+  HIGH        // 0.1mm
+  ULTRA       // 0.05mm
+}
+
+enum OrderStatus {
+  PENDING      // Ожидает подтверждения
+  CONFIRMED    // Подтверждён
+  IN_PROGRESS  // В работе
+  COMPLETED    // Завершён
+  CANCELLED    // Отменён
+}
+
+// ============================================
+// ПОСТЫ (галерея работ)
+// ============================================
+model Post {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?  @db.Text
+
+  // Автор
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Изображения
+  images        Image[]
+
+  // Теги
+  tags          String[] // массив тегов
+
+  // Комментарии
+  comments      Comment[]
+
+  // Лайки/просмотры
+  likes         Int      @default(0)
+  views         Int      @default(0)
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("posts")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================
+// ИЗОБРАЖЕНИЯ
+// ============================================
+model Image {
+  id            String   @id @default(uuid())
+  url           String   // Cloudinary URL
+  publicId      String   // Cloudinary public_id (для удаления)
+  alt           String?
+
+  // Связь с постом
+  postId        String
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+
+  @@map("images")
+  @@index([postId])
+}
+
+// ============================================
+// КУРСЫ
+// ============================================
+model Course {
+  id            String   @id @default(uuid())
+  title         String
+  description   String   @db.Text
+  thumbnail     String?  // URL обложки
+
+  // Метаданные
+  duration      Int?     // минут
+  level         Level    @default(BEGINNER)
+
+  // Статус публикации
+  published     Boolean  @default(false)
+
+  // Lessons
+  lessons       Lesson[]
+
+  // Прогресс студентов
+  progress      CourseProgress[]
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("courses")
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+// ============================================
+// УРОКИ
+// ============================================
+model Lesson {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?  @db.Text
+  content       String   @db.Text // Markdown или HTML
+  videoUrl      String?  // URL видео (YouTube/Cloudinary)
+  order         Int      // Порядок урока
+
+  // Курс
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Прогресс
+  progress      LessonProgress[]
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("lessons")
+  @@index([courseId])
+  @@unique([courseId, order]) // Уникальный порядок внутри курса
+}
+
+// ============================================
+// ПРОГРЕСС КУРСА
+// ============================================
+model CourseProgress {
+  id            String   @id @default(uuid())
+
+  // Пользователь
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Курс
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Прогресс уроков
+  lessonProgress LessonProgress[]
+
+  // Статус
+  completed     Boolean  @default(false)
+  completedAt   DateTime?
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("course_progress")
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+// ============================================
+// ПРОГРЕСС УРОКА
+// ============================================
+model LessonProgress {
+  id                String          @id @default(uuid())
+
+  // Прогресс курса
+  courseProgressId  String
+  courseProgress    CourseProgress  @relation(fields: [courseProgressId], references: [id], onDelete: Cascade)
+
+  // Урок
+  lessonId          String
+  lesson            Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  // Статус
+  completed         Boolean         @default(false)
+  completedAt       DateTime?
+
+  // Timestamps
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@map("lesson_progress")
+  @@unique([courseProgressId, lessonId])
+  @@index([courseProgressId])
+  @@index([lessonId])
+}
+
+// ============================================
+// КОММЕНТАРИИ К ПОСТАМ
+// ============================================
+model Comment {
+  id        String   @id @default(uuid())
+  text      String   @db.Text
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("comments")
+  @@index([postId])
+  @@index([userId])
+}
+
+// ============================================
+// ПОДПИСКИ
+// ============================================
+model Subscription {
+  id            String   @id @default(uuid())
+
+  // Подписчик
+  subscriberId  String
+  subscriber    User     @relation("UserSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  // На кого подписан
+  subscribedToId String
+  subscribedTo  User     @relation("SubscribedTo", fields: [subscribedToId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+
+  @@map("subscriptions")
+  @@unique([subscriberId, subscribedToId])
+  @@index([subscriberId])
+  @@index([subscribedToId])
+}
