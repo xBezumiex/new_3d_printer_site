@@ -76,14 +76,16 @@ app.use('/uploads', (req, res, next) => {
 // ===================
 
 // Health check
-app.get('/health', (req, res) => {
+const healthHandler = (req, res) => {
   res.json({
     success: true,
     message: '3D Print Lab API работает',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
   });
-});
+};
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // API маршруты
 app.use('/api/auth', authRoutes);
