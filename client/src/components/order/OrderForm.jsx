@@ -1,8 +1,9 @@
-// Форма оформления заказа
+// Форма оформления заказа с валидацией в реальном времени
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { CheckCircle } from 'lucide-react';
 import { useModel } from '../../context/ModelContext';
 import { useAuth } from '../../context/AuthContext';
 import * as ordersApi from '../../api/orders.api';
@@ -12,6 +13,7 @@ export default function OrderForm() {
   const { user } = useAuth();
   const { modelLoaded, modelData, calcParams, price, materials, qualities } = useModel();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const {
     register,
@@ -19,6 +21,7 @@ export default function OrderForm() {
     formState: { errors },
     reset,
   } = useForm({
+    mode: 'onChange',
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
@@ -49,10 +52,9 @@ export default function OrderForm() {
       };
 
       await ordersApi.createOrder(orderData);
-
-      toast.success('Заказ успешно оформлен! Мы свяжемся с вами в ближайшее время.');
-      reset();
-      navigate('/dashboard');
+      setSubmitted(true);
+      toast.success('Заказ успешно оформлен!');
+      setTimeout(() => navigate('/dashboard'), 2000);
     } catch (error) {
       console.error('Ошибка оформления заказа:', error);
       toast.error(error.message || 'Ошибка при оформлении заказа');
@@ -61,6 +63,27 @@ export default function OrderForm() {
     }
   };
 
+  const inputClass = (hasError) =>
+    `w-full border rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+      hasError
+        ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/10'
+        : 'border-gray-300 dark:border-gray-600'
+    }`;
+
+  if (submitted) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
+        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Заказ оформлен!</h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-2">Мы свяжемся с вами в ближайшее время</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500">Переход в личный кабинет...</p>
+        <div className="mt-4 flex justify-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
@@ -68,70 +91,70 @@ export default function OrderForm() {
       </h3>
 
       {!modelLoaded && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-          <p className="text-red-800 dark:text-red-300">
-            Пожалуйста, сначала загрузите 3D модель и рассчитайте стоимость
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6 flex items-start gap-3">
+          <span className="text-red-500 text-lg shrink-0">⚠</span>
+          <p className="text-red-800 dark:text-red-300 text-sm">
+            Пожалуйста, сначала{' '}
+            <a href="#upload" className="underline font-medium">загрузите 3D модель</a>{' '}
+            и рассчитайте стоимость
           </p>
         </div>
       )}
 
       {/* Детали заказа */}
-      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6">
-        <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
-          Детали заказа:
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-5 mb-6">
+        <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+          <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">✓</span>
+          Детали заказа
         </h4>
-        <div className="space-y-1 text-sm">
-          <p className="text-gray-700 dark:text-gray-300">
-            Материал: {materials[calcParams.material].name}
-          </p>
-          <p className="text-gray-700 dark:text-gray-300">
-            Качество: {qualities[calcParams.quality].name}
-          </p>
-          <p className="text-gray-700 dark:text-gray-300">
-            Заполнение: {calcParams.infill}%
-          </p>
-          <p className="text-gray-700 dark:text-gray-300">
-            Количество: {calcParams.quantity} шт.
-          </p>
-          <p className="text-gray-700 dark:text-gray-300">
-            Объем: {calcParams.volume} см³
-          </p>
-          <p className="text-gray-700 dark:text-gray-300">
-            Вес: {calcParams.weight} г
-          </p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+          <span className="text-gray-500 dark:text-gray-400">Материал:</span>
+          <span className="font-medium text-gray-900 dark:text-white">{materials[calcParams.material].name}</span>
+          <span className="text-gray-500 dark:text-gray-400">Качество:</span>
+          <span className="font-medium text-gray-900 dark:text-white">{qualities[calcParams.quality].name}</span>
+          <span className="text-gray-500 dark:text-gray-400">Заполнение:</span>
+          <span className="font-medium text-gray-900 dark:text-white">{calcParams.infill}%</span>
+          <span className="text-gray-500 dark:text-gray-400">Количество:</span>
+          <span className="font-medium text-gray-900 dark:text-white">{calcParams.quantity} шт.</span>
+          <span className="text-gray-500 dark:text-gray-400">Объём / Вес:</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {calcParams.volume} см³ / {calcParams.weight} г
+          </span>
           {modelData?.fileName && (
-            <p className="text-gray-700 dark:text-gray-300">
-              Файл: {modelData.fileName}
-            </p>
+            <>
+              <span className="text-gray-500 dark:text-gray-400">Файл:</span>
+              <span className="font-medium text-gray-900 dark:text-white truncate">{modelData.fileName}</span>
+            </>
           )}
         </div>
-        <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-3">
-          Стоимость: {price} ₽
-        </p>
+        <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700 flex items-center justify-between">
+          <span className="font-semibold text-gray-700 dark:text-gray-300">Итого:</span>
+          <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{price} ₽</span>
+        </div>
       </div>
 
       {/* Форма */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Имя */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
             Имя *
           </label>
           <input
             type="text"
-            {...register('name', { required: 'Имя обязательно' })}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            {...register('name', { required: 'Имя обязательно', minLength: { value: 2, message: 'Минимум 2 символа' } })}
+            className={inputClass(errors.name)}
             placeholder="Иван Иванов"
             disabled={isSubmitting}
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">⚠ {errors.name.message}</p>
           )}
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
             Email *
           </label>
           <input
@@ -143,41 +166,47 @@ export default function OrderForm() {
                 message: 'Некорректный email',
               },
             })}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={inputClass(errors.email)}
             placeholder="ivan@example.com"
             disabled={isSubmitting}
           />
           {errors.email && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">⚠ {errors.email.message}</p>
           )}
         </div>
 
         {/* Телефон */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
             Телефон *
           </label>
           <input
             type="tel"
-            {...register('phone', { required: 'Телефон обязателен' })}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            {...register('phone', {
+              required: 'Телефон обязателен',
+              pattern: {
+                value: /^[\d\s\-\+\(\)]{7,}$/,
+                message: 'Некорректный номер телефона',
+              },
+            })}
+            className={inputClass(errors.phone)}
             placeholder="+7 (999) 123-45-67"
             disabled={isSubmitting}
           />
           {errors.phone && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.phone.message}</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">⚠ {errors.phone.message}</p>
           )}
         </div>
 
         {/* Комментарий */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
             Комментарий к заказу
           </label>
           <textarea
             {...register('comments')}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 h-32 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            placeholder="Дополнительные пожелания, адрес доставки..."
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 h-28 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors"
+            placeholder="Дополнительные пожелания, адрес доставки, особые требования..."
             disabled={isSubmitting}
           />
         </div>
@@ -186,20 +215,33 @@ export default function OrderForm() {
         <button
           type="submit"
           disabled={!modelLoaded || isSubmitting}
-          className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+          className={`w-full py-3 rounded-lg font-semibold text-white transition-all flex items-center justify-center gap-2 ${
             modelLoaded && !isSubmitting
-              ? 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+              ? 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg cursor-pointer'
               : 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
           }`}
         >
-          {isSubmitting ? 'Оформление...' : `Оформить заказ на ${price} ₽`}
+          {isSubmitting ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Оформление заказа...
+            </>
+          ) : (
+            `Оформить заказ — ${price} ₽`
+          )}
         </button>
       </form>
 
       {/* Дополнительная информация */}
-      <div className="mt-6 text-sm text-gray-600 dark:text-gray-400 space-y-2">
-        <p>* После оформления заказа мы свяжемся с вами в течение 1 часа для подтверждения деталей.</p>
-        <p>* Срок изготовления: 24-48 часов с момента подтверждения.</p>
+      <div className="mt-5 p-4 bg-gray-50 dark:bg-gray-700/40 rounded-lg text-sm text-gray-600 dark:text-gray-400 space-y-1.5">
+        <p className="flex items-start gap-2">
+          <span className="text-blue-500 shrink-0">ℹ</span>
+          После оформления мы свяжемся с вами в течение 1 часа для подтверждения
+        </p>
+        <p className="flex items-start gap-2">
+          <span className="text-blue-500 shrink-0">🕐</span>
+          Срок изготовления: 24–48 часов с момента подтверждения
+        </p>
       </div>
     </div>
   );

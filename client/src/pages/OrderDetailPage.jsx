@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Package, CheckCircle, Clock, Wrench, Truck, XCircle } from 'lucide-react';
 import * as ordersApi from '../api/orders.api';
 import toast from 'react-hot-toast';
+import Breadcrumb from '../components/Breadcrumb';
 
 const TIMELINE = [
   { status: 'PENDING',     icon: Clock,        label: 'Принят',         desc: 'Заказ получен и ожидает подтверждения' },
@@ -67,10 +68,10 @@ export default function OrderDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10">
       <div className="container mx-auto px-4 max-w-3xl">
-        {/* Back */}
-        <Link to="/dashboard" className="inline-flex items-center gap-2 text-blue-600 hover:underline mb-6">
-          <ArrowLeft className="w-4 h-4" /> Мои заказы
-        </Link>
+        <Breadcrumb items={[
+          { label: 'Личный кабинет', to: '/dashboard' },
+          { label: `Заказ #${order.id?.slice(0, 8).toUpperCase()}` },
+        ]} />
 
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Заказ #{order.id?.slice(0, 8).toUpperCase()}
