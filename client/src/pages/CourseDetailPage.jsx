@@ -5,6 +5,7 @@ import { ArrowLeft, BookOpen, Users, Award, CheckCircle, Lock } from 'lucide-rea
 import { useAuth } from '../context/AuthContext';
 import * as coursesApi from '../api/courses.api';
 import toast from 'react-hot-toast';
+import Breadcrumb from '../components/Breadcrumb';
 
 export default function CourseDetailPage() {
   const { id } = useParams();
@@ -106,14 +107,10 @@ export default function CourseDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
       <div className="container mx-auto px-4">
-        {/* Кнопка назад */}
-        <button
-          onClick={() => navigate('/courses')}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Назад к курсам
-        </button>
+        <Breadcrumb items={[
+          { label: 'Курсы', to: '/courses' },
+          { label: course?.title || 'Курс' },
+        ]} />
 
         <div className="max-w-5xl mx-auto">
           {/* Информация о курсе */}

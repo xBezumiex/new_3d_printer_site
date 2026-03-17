@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import PostDetail from '../components/posts/PostDetail';
 import * as postsApi from '../api/posts.api';
 import toast from 'react-hot-toast';
+import Breadcrumb from '../components/Breadcrumb';
 
 export default function PostDetailPage() {
   const { id } = useParams();
@@ -53,14 +54,10 @@ export default function PostDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
       <div className="container mx-auto px-4">
-        {/* Кнопка назад */}
-        <button
-          onClick={() => navigate('/posts')}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Назад к галерее
-        </button>
+        <Breadcrumb items={[
+          { label: 'Галерея', to: '/posts' },
+          { label: post.title || 'Публикация' },
+        ]} />
 
         {/* Детали поста */}
         <div className="max-w-5xl mx-auto">
