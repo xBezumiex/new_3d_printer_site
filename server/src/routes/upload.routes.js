@@ -1,97 +1,49 @@
-// Маршруты для загрузки файлов
+// Загрузка изображений — хранение в PostgreSQL (data column)
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
+import { PrismaClient } from '@prisma/client';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Директория для загрузок
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Настройка multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `${uniqueSuffix}${ext}`);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Допустимы только изображения (JPEG, PNG, GIF, WebP)'), false);
-  }
-};
+const prisma = new PrismaClient();
 
 const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    const ok = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype);
+    ok ? cb(null, true) : cb(new Error('Только изображения (JPEG, PNG, GIF, WebP)'));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
+
+// Сохранить изображение в image_data таблицу через raw SQL
+async function saveImageToDb(buffer, mimeType) {
+  const id = crypto.randomUUID();
+  const b64 = buffer.toString('base64');
+  await prisma.$executeRaw`
+    INSERT INTO image_data (id, data, mime_type)
+    VALUES (${id}, ${b64}, ${mimeType})
+  `;
+  return id;
+}
 
 const router = express.Router();
 
-// Загрузка одного изображения
-router.post(
-  '/image',
-  authenticate,
-  upload.single('image'),
-  asyncHandler(async (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Файл не загружен',
-      });
-    }
+// POST /api/upload/image
+router.post('/image', authenticate, upload.single('image'), asyncHandler(async (req, res) => {
+  if (!req.file) return res.status(400).json({ status: 'fail', message: 'Файл не загружен' });
+  const id = await saveImageToDb(req.file.buffer, req.file.mimetype);
+  res.json({ status: 'success', data: { url: `/api/images/${id}`, originalName: req.file.originalname, size: req.file.size } });
+}));
 
-    const imageUrl = `/uploads/${req.file.filename}`;
-
-    res.json({
-      status: 'success',
-      data: {
-        url: imageUrl,
-        filename: req.file.filename,
-        originalName: req.file.originalname,
-        size: req.file.size,
-      },
-    });
-  })
-);
-
-// Загрузка нескольких изображений (до 10)
-router.post(
-  '/images',
-  authenticate,
-  upload.array('images', 10),
-  asyncHandler(async (req, res) => {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Файлы не загружены',
-      });
-    }
-
-    const urls = req.files.map((file) => `/uploads/${file.filename}`);
-
-    res.json({
-      status: 'success',
-      data: { urls },
-    });
-  })
-);
+// POST /api/upload/images
+router.post('/images', authenticate, upload.array('images', 10), asyncHandler(async (req, res) => {
+  if (!req.files?.length) return res.status(400).json({ status: 'fail', message: 'Файлы не загружены' });
+  const urls = await Promise.all(req.files.map(async f => {
+    const id = await saveImageToDb(f.buffer, f.mimetype);
+    return `/img/${id}`;
+  }));
+  res.json({ status: 'success', data: { urls } });
+}));
 
 export default router;
