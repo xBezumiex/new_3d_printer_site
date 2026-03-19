@@ -17,6 +17,7 @@ import searchRoutes from './routes/search.routes.js';
 import subscriptionsRoutes from './routes/subscriptions.routes.js';
 import coursesRoutes from './routes/courses.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import imagesRoutes from './routes/images.routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -63,13 +64,17 @@ const limiter = rateLimit({
 
 app.use('/api/', limiter);
 
-// Статические файлы (загруженные изображения)
-// Cross-Origin-Resource-Policy: cross-origin — разрешает браузеру загружать
-// изображения с этого сервера (порт 5000) когда фронтенд на другом порту (5173)
+// Статические файлы (загруженные изображения — legacy)
 app.use('/uploads', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 }, express.static(path.join(__dirname, '../uploads')));
+
+// Изображения из БД — без rate limiter, с кешем
+app.use('/img', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, imagesRoutes);
 
 // ===================
 // Маршруты

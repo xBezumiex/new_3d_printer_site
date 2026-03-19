@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
 const getImgUrl = (url) => {
   if (!url) return null;
-  if (url.startsWith('http')) return url;
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
   return `${SERVER_URL}${url}`;
 };
 
