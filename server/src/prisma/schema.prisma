@@ -142,13 +142,9 @@ model Post {
 // ============================================
 model Image {
   id            String   @id @default(uuid())
-  url           String   // Absolute URL or /api/images/:id
-  publicId      String   // identifier
+  url           String   // /img/:id or external URL
+  publicId      String   @default("") // identifier
   alt           String?
-
-  // DB-хранение изображения (base64)
-  data          String?  @db.Text
-  mimeType      String?
 
   // Связь с постом
   postId        String
