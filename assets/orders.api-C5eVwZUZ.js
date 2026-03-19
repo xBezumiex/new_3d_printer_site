@@ -1,0 +1,1 @@
+import{d as e}from"./index-J5L3b13E.js";const n=async s=>(await e.post("/orders",s)).data,o=async(s={})=>(await e.get("/orders",{params:s})).data,c=async s=>(await e.get(`/orders/${s}`)).data,d=async(s,t)=>(await e.put(`/orders/${s}/status`,{status:t})).data,p=async()=>(await e.get("/orders/stats")).data;export{c as a,p as b,n as c,o as g,d as u};
