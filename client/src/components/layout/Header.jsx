@@ -20,9 +20,9 @@ const MORE_LINKS = [
 ];
 
 const linkCls = ({ isActive }) =>
-  `relative text-sm font-medium transition-colors whitespace-nowrap pb-0.5 ${isActive
-    ? 'text-blue-600 dark:text-blue-400 after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-600 after:dark:bg-blue-400 after:rounded-full'
-    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`;
+  `text-sm font-medium transition-all whitespace-nowrap px-3 py-1.5 rounded-lg ${isActive
+    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'}`;
 
 const mobileLinkCls = ({ isActive }) =>
   `block py-2.5 px-3 rounded-lg text-sm transition-colors ${isActive
@@ -41,7 +41,7 @@ function Dropdown({ trigger, children }) {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(v => !v)} className="flex items-center gap-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+      <button onClick={() => setOpen(v => !v)} className="flex items-center gap-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-all px-3 py-1.5 rounded-lg">
         {trigger} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
