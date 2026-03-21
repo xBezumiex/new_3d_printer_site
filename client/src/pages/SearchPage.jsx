@@ -41,7 +41,7 @@ export default function SearchPage() {
       {/* Аватар */}
       <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
         {user.avatar ? (
-          <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+          <img src={user.avatar} alt={user.name} loading="lazy" className="w-full h-full object-cover" />
         ) : (
           <div className="flex items-center justify-center w-full h-full text-white text-xl font-bold">
             {user.name?.[0]?.toUpperCase() || '?'}

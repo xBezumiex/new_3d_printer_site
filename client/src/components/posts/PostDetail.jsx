@@ -214,7 +214,7 @@ export default function PostDetail({ post, onDelete }) {
                 {/* Аватар */}
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden">
                   {comment.user.avatar ? (
-                    <img src={getImgUrl(comment.user.avatar)} alt={comment.user.name} className="w-full h-full object-cover" />
+                    <img src={getImgUrl(comment.user.avatar)} alt={comment.user.name} loading="lazy" className="w-full h-full object-cover" />
                   ) : (
                     comment.user.name?.charAt(0).toUpperCase()
                   )}

@@ -51,7 +51,7 @@ export default function PostCard({ post }) {
       {/* Изображение */}
       {firstImage ? (
         <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600">
-          <img src={firstImage} alt={post.title} className="w-full h-full object-cover"
+          <img src={firstImage} alt={post.title} loading="lazy" className="w-full h-full object-cover"
             onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           {imageCount > 1 && (
             <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
