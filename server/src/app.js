@@ -70,7 +70,11 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, '../uploads')));
 
-// Изображения из БД — без rate limiter, с кешем
+// Изображения из БД — доступны по /api/images и /img
+app.use('/api/images', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, imagesRoutes);
 app.use('/img', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
