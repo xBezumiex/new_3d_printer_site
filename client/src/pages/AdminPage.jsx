@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('orders');
   const [statusFilter, setStatusFilter] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
 
@@ -67,11 +68,14 @@ export default function AdminPage() {
   };
 
   const loadUsers = async () => {
+    setUsersLoading(true);
     try {
       const data = await usersApi.getUsers();
       setUsers(data.data?.users || data.data || []);
     } catch (e) {
       toast.error('Ошибка загрузки пользователей');
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -228,36 +232,71 @@ export default function AdminPage() {
 
         {activeTab === 'users' && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs uppercase">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Имя</th>
-                    <th className="px-4 py-3 text-left">Email</th>
-                    <th className="px-4 py-3 text-left">Роль</th>
-                    <th className="px-4 py-3 text-left">Дата регистрации</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {users.map(u => (
-                    <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{u.name}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{u.email}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${u.role === 'ADMIN'
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
-                          {u.role === 'ADMIN' ? 'Админ' : 'Пользователь'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
-                        {formatDate(u.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">
+                Всего пользователей: {users.length}
+              </span>
+              <button onClick={loadUsers}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition">
+                <RefreshCw className="w-4 h-4" /> Обновить
+              </button>
             </div>
+
+            {usersLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              </div>
+            ) : users.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                Пользователей нет
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Имя</th>
+                      <th className="px-4 py-3 text-left">Email</th>
+                      <th className="px-4 py-3 text-left">Роль</th>
+                      <th className="px-4 py-3 text-left">Посты</th>
+                      <th className="px-4 py-3 text-left">Заказы</th>
+                      <th className="px-4 py-3 text-left">Дата регистрации</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {users.map(u => (
+                      <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {u.avatar
+                              ? <img src={u.avatar} className="w-8 h-8 rounded-full object-cover" alt="" />
+                              : <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold text-sm">
+                                  {u.name?.[0]?.toUpperCase() || '?'}
+                                </div>
+                            }
+                            <span className="font-medium text-gray-900 dark:text-white">{u.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{u.email}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${u.role === 'ADMIN'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+                            {u.role === 'ADMIN' ? 'Админ' : 'Пользователь'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{u._count?.posts ?? 0}</td>
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{u._count?.orders ?? 0}</td>
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">
+                          {formatDate(u.createdAt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
