@@ -1,0 +1,1 @@
+import{a as e}from"./index-Cc-py7Ni.js";const o=(s={})=>e.get("/courses",{params:s}),t=s=>e.get(`/courses/${s}`),n=s=>e.get(`/courses/${s}/lessons`),u=s=>e.post(`/courses/${s}/enroll`),c=s=>e.get(`/courses/${s}/progress`);export{t as a,n as b,c,u as e,o as g};
