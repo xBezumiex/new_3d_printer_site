@@ -45,7 +45,7 @@ export default function AvatarUpload({ user, onUpdate }) {
         avatar: avatarUrl,
       });
 
-      const updatedUser = response.data.data.user;
+      const updatedUser = response.data?.user || response.data?.data?.user;
 
       // Обновить пользователя в AuthContext если это текущий пользователь
       updateUser(updatedUser);
