@@ -180,7 +180,35 @@ export const updateOrderStatus = async (orderId, status) => {
     }
   });
 
-  // TODO: Отправить email клиенту об изменении статуса
+  // Отправить email клиенту об изменении статуса
+  if (updatedOrder.user?.email) {
+    const STATUS_LABELS = {
+      PENDING: 'Ожидает обработки',
+      CONFIRMED: 'Подтверждён',
+      IN_PROGRESS: 'В работе',
+      COMPLETED: 'Выполнен',
+      CANCELLED: 'Отменён',
+    };
+    try {
+      const transporter = (await import('../config/email.js')).default;
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || '3D Print Lab <noreply@3dprintlab.com>',
+        to: updatedOrder.user.email,
+        subject: `Статус заказа изменён — 3D Print Lab`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+          <h2 style="color:#3b82f6">Статус вашего заказа изменён</h2>
+          <p>Здравствуйте, <strong>${updatedOrder.user.name}</strong>!</p>
+          <p>Статус вашего заказа обновлён:</p>
+          <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;text-align:center">
+            <p style="font-size:22px;font-weight:bold;color:#3b82f6;margin:0">${STATUS_LABELS[status] || status}</p>
+          </div>
+          <p style="color:#6b7280;font-size:14px">С уважением,<br>Команда 3D Print Lab</p>
+        </div>`
+      });
+    } catch (e) {
+      console.error('Ошибка отправки email об изменении статуса:', e.message);
+    }
+  }
 
   return updatedOrder;
 };
