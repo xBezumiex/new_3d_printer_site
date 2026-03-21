@@ -272,7 +272,7 @@ export default function AdminPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {u.avatar
-                              ? <img src={u.avatar} className="w-8 h-8 rounded-full object-cover" alt="" />
+                              ? <img src={u.avatar} loading="lazy" className="w-8 h-8 rounded-full object-cover" alt="" />
                               : <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold text-sm">
                                   {u.name?.[0]?.toUpperCase() || '?'}
                                 </div>
