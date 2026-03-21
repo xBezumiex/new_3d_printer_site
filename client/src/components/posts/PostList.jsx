@@ -1,5 +1,5 @@
 // Список постов с пагинацией и skeleton-loader
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import PostCard from './PostCard';
 import * as postsApi from '../../api/posts.api';
@@ -24,29 +24,37 @@ function PostSkeleton() {
 
 export default function PostList({ userId, searchQuery, sort = 'newest' }) {
   const [posts, setPosts] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 9, total: 0, pages: 0 });
+  const [pagination, setPagination] = useState({ total: 0, pages: 0 });
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const prevFilters = useRef({ searchQuery, userId, sort });
 
+  // Сброс страницы при смене фильтров
   useEffect(() => {
-    setPagination(p => ({ ...p, page: 1 }));
+    const prev = prevFilters.current;
+    if (prev.searchQuery !== searchQuery || prev.userId !== userId || prev.sort !== sort) {
+      prevFilters.current = { searchQuery, userId, sort };
+      setPage(1);
+    }
   }, [searchQuery, userId, sort]);
 
   useEffect(() => {
-    loadPosts();
-  }, [pagination.page, userId, searchQuery, sort]);
+    loadPosts(page, searchQuery, userId, sort);
+  }, [page, searchQuery, userId, sort]);
 
-  const loadPosts = async () => {
+  const loadPosts = async (currentPage, currentSearch, currentUserId, currentSort) => {
     setIsLoading(true);
     try {
-      const params = { page: pagination.page, limit: pagination.limit };
-      if (userId) params.userId = userId;
-      if (searchQuery) params.search = searchQuery;
-      if (sort === 'popular') params.sort = 'likes';
-      if (sort === 'oldest') params.order = 'asc';
+      const params = { page: currentPage, limit: 9 };
+      if (currentUserId) params.userId = currentUserId;
+      if (currentSearch) params.search = currentSearch;
+      if (currentSort === 'popular') params.sort = 'likes';
+      if (currentSort === 'oldest') params.order = 'asc';
 
       const response = await postsApi.getPosts(params);
-      setPosts(response.data.data.posts);
-      setPagination(response.data.data.pagination);
+      const data = response.data?.data || response.data;
+      setPosts(data.posts || []);
+      setPagination({ total: data.pagination?.total || 0, pages: data.pagination?.pages || 0 });
     } catch {
       toast.error('Не удалось загрузить посты');
     } finally {
@@ -54,8 +62,8 @@ export default function PostList({ userId, searchQuery, sort = 'newest' }) {
     }
   };
 
-  const goToPage = (page) => {
-    setPagination(prev => ({ ...prev, page }));
+  const goToPage = (p) => {
+    setPage(p);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -86,34 +94,31 @@ export default function PostList({ userId, searchQuery, sort = 'newest' }) {
 
       {pagination.pages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <button onClick={() => goToPage(pagination.page - 1)} disabled={pagination.page === 1}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+          <button onClick={() => goToPage(page - 1)} disabled={page === 1}
+            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
             <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </button>
-
           {[...Array(pagination.pages)].map((_, i) => {
-            const page = i + 1;
-            const near = page === 1 || page === pagination.pages || (page >= pagination.page - 2 && page <= pagination.page + 2);
-            const dots = (page === pagination.page - 3 && page > 1) || (page === pagination.page + 3 && page < pagination.pages);
-            if (dots) return <span key={page} className="px-2 text-gray-500">...</span>;
+            const p = i + 1;
+            const near = p === 1 || p === pagination.pages || (p >= page - 2 && p <= page + 2);
+            const dots = (p === page - 3 && p > 1) || (p === page + 3 && p < pagination.pages);
+            if (dots) return <span key={p} className="px-2 text-gray-500">...</span>;
             if (!near) return null;
             return (
-              <button key={page} onClick={() => goToPage(page)}
-                className={`px-4 py-2 rounded-lg border transition ${page === pagination.page
+              <button key={p} onClick={() => goToPage(p)}
+                className={`px-4 py-2 rounded-lg border transition ${p === page
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                {page}
+                {p}
               </button>
             );
           })}
-
-          <button onClick={() => goToPage(pagination.page + 1)} disabled={pagination.page === pagination.pages}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+          <button onClick={() => goToPage(page + 1)} disabled={page === pagination.pages}
+            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
             <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </button>
         </div>
       )}
-
       <div className="text-center mt-4 text-sm text-gray-500 dark:text-gray-400">
         Показано {posts.length} из {pagination.total} постов
       </div>
