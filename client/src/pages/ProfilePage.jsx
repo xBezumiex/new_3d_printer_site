@@ -33,7 +33,7 @@ export default function ProfilePage() {
     try {
       // Всегда загружаем с сервера для получения актуального _count (заказы, посты)
       const response = await usersApi.getUserById(userId);
-      setProfileUser(response.data.data.user);
+      setProfileUser(response.data?.user || response.data);
     } catch (error) {
       console.error('Ошибка загрузки профиля:', error);
       toast.error('Не удалось загрузить профиль');
@@ -45,7 +45,7 @@ export default function ProfilePage() {
   const loadUserPosts = async () => {
     try {
       const response = await usersApi.getUserPosts(userId, { limit: 12 });
-      setPosts(response.data.data.posts || []);
+      setPosts(response.data?.posts || response.data?.data?.posts || []);
     } catch (error) {
       console.error('Ошибка загрузки постов:', error);
     }
