@@ -1,7 +1,7 @@
 // Маршруты приложения с ленивой загрузкой для оптимизации производительности
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import ProtectedRoute from './components/auth/ProtectedRoute';
+import ProtectedRoute, { GuestRoute, AdminRoute } from './components/auth/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 
 // Скелетон-заглушка при загрузке страницы
@@ -47,9 +47,8 @@ export default function AppRoutes() {
         <Routes>
           {/* Публичные маршруты */}
           <Route path="/"          element={<HomePage />} />
-          <Route path="/login"     element={<LoginPage />} />
-          <Route path="/register"  element={<RegisterPage />} />
-          <Route path="/upload"    element={<UploadPage />} />
+          <Route path="/login"     element={<GuestRoute><LoginPage /></GuestRoute>} />
+          <Route path="/register"  element={<GuestRoute><RegisterPage /></GuestRoute>} />
           <Route path="/calculator" element={<CalculatorPage />} />
           <Route path="/materials" element={<MaterialsPage />} />
           <Route path="/faq"       element={<FaqPage />} />
@@ -71,6 +70,7 @@ export default function AppRoutes() {
           <Route path="/users/:id" element={<ProfilePage />} />
 
           {/* Защищённые маршруты */}
+          <Route path="/upload"    element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
           <Route path="/order"     element={<ProtectedRoute><OrderPage /></ProtectedRoute>} />
           <Route path="/profile"   element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -78,7 +78,7 @@ export default function AppRoutes() {
           <Route path="/posts/create" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
 
           {/* Только для администраторов */}
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
           {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />
