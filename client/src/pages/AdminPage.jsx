@@ -73,7 +73,7 @@ export default function AdminPage() {
     setUsersLoading(true);
     try {
       const data = await usersApi.getUsers();
-      setUsers(data.data?.users || data.data || []);
+      setUsers(data.data?.users || []);
     } catch (e) {
       toast.error('Ошибка загрузки пользователей');
     } finally {

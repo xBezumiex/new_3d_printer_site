@@ -1,27 +1,27 @@
 // API для работы с пользователями
 import axiosInstance from './axios';
 
-// Получить список пользователей
-export const getUsers = (params = {}) => {
-  return axiosInstance.get('/users', { params });
+export const getUsers = async (params = {}) => {
+  const response = await axiosInstance.get('/users', { params });
+  return response.data;
 };
 
-// Получить пользователя по ID
-export const getUserById = (userId) => {
-  return axiosInstance.get(`/users/${userId}`);
+export const getUserById = async (userId) => {
+  const response = await axiosInstance.get(`/users/${userId}`);
+  return response.data;
 };
 
-// Обновить профиль пользователя
-export const updateUserProfile = (userId, data) => {
-  return axiosInstance.put(`/users/${userId}`, data);
+export const updateUserProfile = async (userId, data) => {
+  const response = await axiosInstance.put(`/users/${userId}`, data);
+  return response.data;
 };
 
-// Получить посты пользователя
-export const getUserPosts = (userId, params = {}) => {
-  return axiosInstance.get(`/users/${userId}/posts`, { params });
+export const getUserPosts = async (userId, params = {}) => {
+  const response = await axiosInstance.get(`/users/${userId}/posts`, { params });
+  return response.data;
 };
 
-// Поиск пользователей
-export const searchUsers = (query) => {
-  return axiosInstance.get('/users', { params: { search: query } });
+export const searchUsers = async (query) => {
+  const response = await axiosInstance.get('/users', { params: { search: query } });
+  return response.data;
 };
