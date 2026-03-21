@@ -1,0 +1,1 @@
+import{d as e}from"./index-B3oeo-0k.js";const o=(s={})=>e.get("/users",{params:s}),u=s=>e.get(`/users/${s}`),n=(s,t)=>e.put(`/users/${s}`,t),a=(s,t={})=>e.get(`/users/${s}/posts`,{params:t});export{a,o as b,u as g,n as u};
