@@ -78,7 +78,13 @@ export default function Header() {
                 <NavLink to="/dashboard" className={desktopLinkClass}>
                   Мои заказы
                 </NavLink>
-                <NavLink to="/profile" className={desktopLinkClass}>
+                <NavLink to="/profile" className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  {user?.avatar
+                    ? <img src={user.avatar} alt="" className="w-7 h-7 rounded-full object-cover" />
+                    : <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        {user?.name?.[0]?.toUpperCase() || '?'}
+                      </div>
+                  }
                   {user?.name || 'Профиль'}
                 </NavLink>
                 <button
