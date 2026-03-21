@@ -32,16 +32,18 @@ export default function AdminPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
 
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      loadOrders();
+      loadStats();
+    }
+  }, [page, statusFilter, user]);
+
+  useEffect(() => {
+    if (activeTab === 'users' && user?.role === 'ADMIN') loadUsers();
+  }, [activeTab, user]);
+
   if (!user || user.role !== 'ADMIN') return <Navigate to="/" replace />;
-
-  useEffect(() => {
-    loadOrders();
-    loadStats();
-  }, [page, statusFilter]);
-
-  useEffect(() => {
-    if (activeTab === 'users') loadUsers();
-  }, [activeTab]);
 
   const loadOrders = async () => {
     setIsLoading(true);
