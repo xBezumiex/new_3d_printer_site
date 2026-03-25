@@ -1,6 +1,7 @@
 // Контроллеры для постов
 import * as postsService from '../services/posts.service.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import prisma from '../config/database.js';
 
 // @desc    Создать пост
 // @route   POST /api/posts
@@ -142,7 +143,6 @@ export const deleteImageFromPost = asyncHandler(async (req, res) => {
 });
 
 
-import prisma from '../config/database.js';
 export const getTags = asyncHandler(async (req, res) => {
   const posts = await prisma.post.findMany({ select: { tags: true } });
   const allTags = [...new Set(posts.flatMap(p => p.tags))].sort();
