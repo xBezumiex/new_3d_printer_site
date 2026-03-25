@@ -22,6 +22,9 @@ model User {
   bio           String?  @db.Text
   role          Role     @default(USER)
 
+  // Последняя активность
+  lastActivity  DateTime?
+
   // Timestamps
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -33,6 +36,10 @@ model User {
   courseProgress CourseProgress[]
   subscriptions Subscription[] @relation("UserSubscriptions")
   subscribers   Subscription[] @relation("SubscribedTo")
+  sentMessages     Message[]    @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
+  blocking         Block[]      @relation("Blocking")
+  blockedBy        Block[]      @relation("BlockedBy")
 
   @@map("users")
 }
@@ -320,4 +327,48 @@ model Subscription {
   @@unique([subscriberId, subscribedToId])
   @@index([subscriberId])
   @@index([subscribedToId])
+}
+
+// ============================================
+// БЛОКИРОВКИ
+// ============================================
+model Block {
+  id        String   @id @default(uuid())
+
+  blockerId String
+  blocker   User     @relation("Blocking", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  blockedId String
+  blocked   User     @relation("BlockedBy", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("blocks")
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+// ============================================
+// СООБЩЕНИЯ
+// ============================================
+model Message {
+  id         String   @id @default(uuid())
+
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  text       String?  @db.Text
+  imageUrl   String?  // Cloudinary URL
+
+  isRead     Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+
+  @@map("messages")
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
 }

@@ -1,8 +1,9 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, LogOut, ShoppingBag, User, Shield, Sun, Moon, Menu, X } from 'lucide-react';
+import { ChevronDown, LogOut, ShoppingBag, User, Shield, Sun, Moon, Menu, X, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { getUnreadCount } from '../../api/messages.api.js';
 import SearchBar from '../search/SearchBar';
 
 const MAIN_LINKS = [
@@ -55,9 +56,18 @@ function Dropdown({ trigger, children }) {
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { isAuthenticated, user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const load = () => getUnreadCount().then(r => setUnreadCount(r.data?.count || 0)).catch(() => {});
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const close = () => setMobileOpen(false);
   const handleLogout = () => { logout(); close(); navigate('/'); };
@@ -97,6 +107,16 @@ export default function Header() {
 
           {isAuthenticated ? (
             <>
+              {/* Сообщения */}
+              <NavLink to="/chat" className="relative p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <MessageCircle className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </NavLink>
+
               {user?.role === 'ADMIN' && (
                 <NavLink to="/admin"
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold border border-red-200 dark:border-red-800/60 hover:bg-red-100 dark:hover:bg-red-900/40 transition">
