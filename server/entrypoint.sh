@@ -3,8 +3,8 @@
 echo "==> Generating Prisma Client..."
 npx prisma generate
 
-echo "==> Running Prisma migrations..."
-npx prisma migrate deploy || echo "Warning: migration issue, continuing..."
+echo "==> Pushing schema to database..."
+npx prisma db push --skip-generate --accept-data-loss 2>/dev/null || echo "Warning: db push issue, continuing..."
 
 echo "==> Starting server..."
 exec node src/server.js
