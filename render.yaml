@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: server
     buildCommand: npm install && npx prisma generate
-    startCommand: sh -c "npx prisma db push --skip-generate --accept-data-loss 2>/dev/null; node src/server.js"
+    startCommand: node src/server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
