@@ -1,10 +1,12 @@
 // Панель администратора
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { ShoppingBag, Users, DollarSign, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { ShoppingBag, Users, DollarSign, Clock, CheckCircle, XCircle, RefreshCw, Flag, Tag, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import * as ordersApi from '../api/orders.api';
 import * as usersApi from '../api/users.api';
+import { getReports, updateReportStatus } from '../api/reports.api';
+import { getPromos, createPromo, togglePromo, deletePromo } from '../api/promo.api';
 import toast from 'react-hot-toast';
 
 const STATUS_CONFIG = {
@@ -31,6 +33,11 @@ export default function AdminPage() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [promos, setPromos] = useState([]);
+  const [promosLoading, setPromosLoading] = useState(false);
+  const [newPromo, setNewPromo] = useState({ code: '', discount: 10, maxUses: 100 });
 
   useEffect(() => {
     if (user?.role === 'ADMIN') {
@@ -40,7 +47,9 @@ export default function AdminPage() {
   }, [page, statusFilter, user]);
 
   useEffect(() => {
-    if (activeTab === 'users' && user?.role === 'ADMIN') loadUsers();
+    if (activeTab === 'users'   && user?.role === 'ADMIN') loadUsers();
+    if (activeTab === 'reports' && user?.role === 'ADMIN') loadReports();
+    if (activeTab === 'promos'  && user?.role === 'ADMIN') loadPromos();
   }, [activeTab, user]);
 
   if (!user || user.role !== 'ADMIN') return <Navigate to="/" replace />;
@@ -95,6 +104,59 @@ export default function AdminPage() {
     }
   };
 
+  const loadReports = async () => {
+    setReportsLoading(true);
+    try {
+      const data = await getReports();
+      setReports(data.data?.data?.reports || data.data?.reports || []);
+    } catch { toast.error('Ошибка загрузки жалоб'); }
+    finally { setReportsLoading(false); }
+  };
+
+  const handleReportStatus = async (id, status) => {
+    try {
+      await updateReportStatus(id, status);
+      setReports(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+      toast.success('Статус жалобы обновлён');
+    } catch { toast.error('Ошибка'); }
+  };
+
+  const loadPromos = async () => {
+    setPromosLoading(true);
+    try {
+      const data = await getPromos();
+      setPromos(data.data?.data?.promoCodes || data.data?.promoCodes || []);
+    } catch { toast.error('Ошибка загрузки промокодов'); }
+    finally { setPromosLoading(false); }
+  };
+
+  const handleCreatePromo = async () => {
+    if (!newPromo.code.trim()) return toast.error('Введите код');
+    try {
+      const data = await createPromo({ ...newPromo, discount: Number(newPromo.discount), maxUses: Number(newPromo.maxUses) });
+      setPromos(prev => [data.data?.data?.promoCode || data.data?.promoCode, ...prev]);
+      setNewPromo({ code: '', discount: 10, maxUses: 100 });
+      toast.success('Промокод создан');
+    } catch (e) { toast.error(e.response?.data?.message || 'Ошибка'); }
+  };
+
+  const handleTogglePromo = async (id) => {
+    try {
+      const data = await togglePromo(id);
+      const updated = data.data?.data?.promoCode || data.data?.promoCode;
+      setPromos(prev => prev.map(p => p.id === id ? updated : p));
+    } catch { toast.error('Ошибка'); }
+  };
+
+  const handleDeletePromo = async (id) => {
+    if (!confirm('Удалить промокод?')) return;
+    try {
+      await deletePromo(id);
+      setPromos(prev => prev.filter(p => p.id !== id));
+      toast.success('Промокод удалён');
+    } catch { toast.error('Ошибка'); }
+  };
+
   const formatDate = (d) => new Date(d).toLocaleDateString('ru-RU', {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
@@ -121,10 +183,12 @@ export default function AdminPage() {
         )}
 
         {/* Табы */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           {[
-            { key: 'orders', label: 'Заказы' },
-            { key: 'users',  label: 'Пользователи' },
+            { key: 'orders',  label: 'Заказы' },
+            { key: 'users',   label: 'Пользователи' },
+            { key: 'reports', label: 'Жалобы' },
+            { key: 'promos',  label: 'Промокоды' },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setActiveTab(key)}
               className={`px-5 py-2 rounded-lg font-semibold transition ${activeTab === key
@@ -229,6 +293,142 @@ export default function AdminPage() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <span className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <Flag className="w-4 h-4 text-red-500" /> Жалобы ({reports.length})
+              </span>
+              <button onClick={loadReports} className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition">
+                <RefreshCw className="w-4 h-4" /> Обновить
+              </button>
+            </div>
+            {reportsLoading ? (
+              <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>
+            ) : reports.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 dark:text-gray-400">Жалоб нет</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Отправитель</th>
+                      <th className="px-4 py-3 text-left">Тип</th>
+                      <th className="px-4 py-3 text-left">Причина</th>
+                      <th className="px-4 py-3 text-left">Дата</th>
+                      <th className="px-4 py-3 text-center">Статус</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {reports.map(r => (
+                      <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <td className="px-4 py-3 text-gray-900 dark:text-white">{r.reporter?.name || r.reporterId?.slice(0,8)}</td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.targetType}</td>
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300 max-w-xs truncate">{r.reason}</td>
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">{formatDate(r.createdAt)}</td>
+                        <td className="px-4 py-3 text-center">
+                          <select value={r.status} onChange={e => handleReportStatus(r.id, e.target.value)}
+                            className={`text-xs font-semibold px-2 py-1 rounded-full border-0 cursor-pointer ${
+                              r.status === 'PENDING'  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' :
+                              r.status === 'REVIEWED' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
+                                                        'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'}`}>
+                            <option value="PENDING">Ожидает</option>
+                            <option value="REVIEWED">Рассмотрена</option>
+                            <option value="RESOLVED">Решена</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'promos' && (
+          <div className="space-y-6">
+            {/* Создать промокод */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Plus className="w-4 h-4" /> Создать промокод
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                <input value={newPromo.code} onChange={e => setNewPromo(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                  placeholder="КОД" className="flex-1 min-w-[120px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm uppercase" />
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Скидка %</label>
+                  <input type="number" min="1" max="100" value={newPromo.discount}
+                    onChange={e => setNewPromo(p => ({ ...p, discount: e.target.value }))}
+                    className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Макс. использований</label>
+                  <input type="number" min="1" value={newPromo.maxUses}
+                    onChange={e => setNewPromo(p => ({ ...p, maxUses: e.target.value }))}
+                    className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" />
+                </div>
+                <button onClick={handleCreatePromo}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition">
+                  Создать
+                </button>
+              </div>
+            </div>
+
+            {/* Список промокодов */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <span className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-blue-500" /> Промокоды ({promos.length})
+                </span>
+                <button onClick={loadPromos} className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition">
+                  <RefreshCw className="w-4 h-4" /> Обновить
+                </button>
+              </div>
+              {promosLoading ? (
+                <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>
+              ) : promos.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">Промокодов нет</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs uppercase">
+                      <tr>
+                        <th className="px-4 py-3 text-left">Код</th>
+                        <th className="px-4 py-3 text-center">Скидка</th>
+                        <th className="px-4 py-3 text-center">Использований</th>
+                        <th className="px-4 py-3 text-center">Активен</th>
+                        <th className="px-4 py-3 text-center">Действия</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {promos.map(p => (
+                        <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                          <td className="px-4 py-3 font-mono font-semibold text-gray-900 dark:text-white">{p.code}</td>
+                          <td className="px-4 py-3 text-center text-blue-600 dark:text-blue-400 font-semibold">{p.discount}%</td>
+                          <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{p.usedCount} / {p.maxUses}</td>
+                          <td className="px-4 py-3 text-center">
+                            <button onClick={() => handleTogglePromo(p.id)} className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
+                              {p.isActive
+                                ? <ToggleRight className="w-6 h-6 text-green-500" />
+                                : <ToggleLeft className="w-6 h-6 text-gray-400" />}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button onClick={() => handleDeletePromo(p.id)} className="text-red-500 hover:text-red-700 transition">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

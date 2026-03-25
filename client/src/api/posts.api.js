@@ -50,10 +50,18 @@ export const searchPosts = (searchQuery, params = {}) => {
   });
 };
 
-// Лайк поста
+// Лайк поста (legacy)
 export const likePost = (postId, increment) => {
   return axiosInstance.patch(`/posts/${postId}/like`, { increment });
 };
+// Новые лайки
+export const toggleLike = (postId) => axiosInstance.post(`/posts/${postId}/likes`);
+export const checkLike = (postId) => axiosInstance.get(`/posts/${postId}/likes`);
+// Закладки
+export const toggleBookmark = (postId) => axiosInstance.post(`/bookmarks/${postId}`);
+export const checkBookmark = (postId) => axiosInstance.get(`/bookmarks/${postId}/check`);
+// Теги
+export const getTags = () => axiosInstance.get('/posts/tags/list');
 
 // Получить комментарии поста
 export const getComments = (postId) => {

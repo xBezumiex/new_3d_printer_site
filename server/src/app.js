@@ -20,6 +20,11 @@ import uploadRoutes from './routes/upload.routes.js';
 import imagesRoutes from './routes/images.routes.js';
 import messagesRoutes from './routes/messages.routes.js';
 import blocksRoutes from './routes/blocks.routes.js';
+import notificationsRoutes from './routes/notifications.routes.js';
+import bookmarksRoutes from './routes/bookmarks.routes.js';
+import reportsRoutes from './routes/reports.routes.js';
+import promoRoutes from './routes/promo.routes.js';
+import achievementsRoutes from './routes/achievements.routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -109,6 +114,11 @@ app.use('/api/courses', coursesRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/blocks', blocksRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/bookmarks', bookmarksRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/promo', promoRoutes);
+app.use('/api/achievements', achievementsRoutes);
 
 // ===================
 // Обработка ошибок

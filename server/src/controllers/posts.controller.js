@@ -140,3 +140,11 @@ export const deleteImageFromPost = asyncHandler(async (req, res) => {
     data: result,
   });
 });
+
+
+import prisma from '../config/database.js';
+export const getTags = asyncHandler(async (req, res) => {
+  const posts = await prisma.post.findMany({ select: { tags: true } });
+  const allTags = [...new Set(posts.flatMap(p => p.tags))].sort();
+  res.json({ success: true, data: { tags: allTags } });
+});

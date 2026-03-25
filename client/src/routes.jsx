@@ -36,9 +36,10 @@ const MaterialsPage    = lazy(() => import('./pages/MaterialsPage'));
 const FaqPage          = lazy(() => import('./pages/FaqPage'));
 const AboutPage        = lazy(() => import('./pages/AboutPage'));
 const AdminPage        = lazy(() => import('./pages/AdminPage'));
-const ChatPage         = lazy(() => import('./pages/ChatPage'));
-const ContactPage      = lazy(() => import('./pages/ContactPage'));
-const NotFoundPage     = lazy(() => import('./pages/NotFoundPage'));
+const ChatPage             = lazy(() => import('./pages/ChatPage'));
+const NotificationsPage    = lazy(() => import('./pages/NotificationsPage'));
+const ContactPage          = lazy(() => import('./pages/ContactPage'));
+const NotFoundPage         = lazy(() => import('./pages/NotFoundPage'));
 
 export default function AppRoutes() {
   return (
@@ -78,8 +79,9 @@ export default function AppRoutes() {
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
           <Route path="/posts/create" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
 
-          <Route path="/chat"       element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-          <Route path="/chat/:userId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+          <Route path="/chat"          element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+          <Route path="/chat/:userId"  element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
           {/* Только для администраторов */}
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
