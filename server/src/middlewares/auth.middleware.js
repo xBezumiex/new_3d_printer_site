@@ -34,6 +34,12 @@ export const authenticate = async (req, res, next) => {
       throw new UnauthorizedError('Пользователь не найден');
     }
 
+    // Обновление времени последней активности (не ждём)
+    prisma.user.update({
+      where: { id: user.id },
+      data: { lastActivity: new Date() },
+    }).catch(() => {});
+
     // Добавление данных пользователя в req
     req.user = user;
     next();

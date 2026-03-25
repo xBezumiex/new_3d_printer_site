@@ -18,6 +18,8 @@ import subscriptionsRoutes from './routes/subscriptions.routes.js';
 import coursesRoutes from './routes/courses.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import imagesRoutes from './routes/images.routes.js';
+import messagesRoutes from './routes/messages.routes.js';
+import blocksRoutes from './routes/blocks.routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -105,6 +107,8 @@ app.use('/api/search', searchRoutes);
 app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/courses', coursesRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/messages', messagesRoutes);
+app.use('/api/blocks', blocksRoutes);
 
 // ===================
 // Обработка ошибок
