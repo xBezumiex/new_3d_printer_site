@@ -36,14 +36,12 @@ export const createPost = async (userId, postData) => {
 
 // Получение списка постов с пагинацией и фильтрами
 export const getPosts = async (query = {}) => {
-  const { page = 1, limit = 10, userId, search } = query;
+  const { page = 1, limit = 10, userId, search, tag, sort, order } = query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
   const where = {};
 
-  if (userId) {
-    where.userId = userId;
-  }
+  if (userId) where.userId = userId;
 
   if (search) {
     where.OR = [
@@ -51,6 +49,8 @@ export const getPosts = async (query = {}) => {
       { description: { contains: search, mode: 'insensitive' } },
     ];
   }
+
+  if (tag) where.tags = { has: tag };
 
   const [posts, total] = await Promise.all([
     prisma.post.findMany({

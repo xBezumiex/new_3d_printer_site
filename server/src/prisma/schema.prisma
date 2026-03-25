@@ -40,6 +40,11 @@ model User {
   receivedMessages Message[]    @relation("ReceivedMessages")
   blocking         Block[]      @relation("Blocking")
   blockedBy        Block[]      @relation("BlockedBy")
+  postLikes        PostLike[]
+  bookmarks        Bookmark[]
+  notifications    Notification[]
+  reports          Report[]      @relation("ReporterReports")
+  achievements     Achievement[]
 
   @@map("users")
 }
@@ -78,6 +83,9 @@ model Order {
   // Комментарий клиента
   comments      String?     @db.Text
 
+  // Timeline
+  events        OrderEvent[]
+
   // Timestamps
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -85,6 +93,18 @@ model Order {
   @@map("orders")
   @@index([userId])
   @@index([status])
+}
+
+model OrderEvent {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+
+  @@map("order_events")
+  @@index([orderId])
 }
 
 enum Material {
@@ -135,6 +155,12 @@ model Post {
   likes         Int      @default(0)
   views         Int      @default(0)
 
+  // Лайки (relation)
+  postLikes     PostLike[]
+
+  // Закладки
+  bookmarks     Bookmark[]
+
   // Timestamps
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -142,6 +168,124 @@ model Post {
   @@map("posts")
   @@index([userId])
   @@index([createdAt])
+}
+
+// ============================================
+// ЛАЙКИ НА ПОСТЫ
+// ============================================
+model PostLike {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@map("post_likes")
+  @@index([userId])
+  @@index([postId])
+}
+
+// ============================================
+// ЗАКЛАДКИ
+// ============================================
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@map("bookmarks")
+  @@index([userId])
+  @@index([postId])
+}
+
+// ============================================
+// УВЕДОМЛЕНИЯ
+// ============================================
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([userId, isRead])
+}
+
+enum NotificationType {
+  NEW_FOLLOWER
+  POST_LIKED
+  POST_COMMENTED
+  ORDER_STATUS_CHANGED
+  ACHIEVEMENT_EARNED
+}
+
+// ============================================
+// ЖАЛОБЫ
+// ============================================
+model Report {
+  id         String   @id @default(uuid())
+  reporterId String
+  reporter   User     @relation("ReporterReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType String   // "POST", "USER", etc.
+  targetId   String
+  reason     String   @db.Text
+  status     String   @default("PENDING") // PENDING, REVIEWED, DISMISSED
+  createdAt  DateTime @default(now())
+
+  @@map("reports")
+  @@index([reporterId])
+  @@index([status])
+}
+
+// ============================================
+// ПРОМОКОДЫ
+// ============================================
+model PromoCode {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  discount  Float     // процент скидки (0-100)
+  maxUses   Int       @default(100)
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  @@map("promo_codes")
+}
+
+// ============================================
+// ДОСТИЖЕНИЯ
+// ============================================
+model Achievement {
+  id       String          @id @default(uuid())
+  userId   String
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type     AchievementType
+  earnedAt DateTime        @default(now())
+
+  @@unique([userId, type])
+  @@map("achievements")
+  @@index([userId])
+}
+
+enum AchievementType {
+  FIRST_POST
+  TEN_POSTS
+  FIRST_FOLLOWER_TEN
+  FIRST_ORDER
+  POPULAR_POST
+  PROFILE_COMPLETE
 }
 
 // ============================================

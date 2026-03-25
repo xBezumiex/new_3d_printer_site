@@ -22,32 +22,33 @@ function PostSkeleton() {
   );
 }
 
-export default function PostList({ userId, searchQuery, sort = 'newest' }) {
+export default function PostList({ userId, searchQuery, sort = 'newest', tag = '' }) {
   const [posts, setPosts] = useState([]);
   const [pagination, setPagination] = useState({ total: 0, pages: 0 });
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const prevFilters = useRef({ searchQuery, userId, sort });
+  const prevFilters = useRef({ searchQuery, userId, sort, tag });
 
   // Сброс страницы при смене фильтров
   useEffect(() => {
     const prev = prevFilters.current;
-    if (prev.searchQuery !== searchQuery || prev.userId !== userId || prev.sort !== sort) {
-      prevFilters.current = { searchQuery, userId, sort };
+    if (prev.searchQuery !== searchQuery || prev.userId !== userId || prev.sort !== sort || prev.tag !== tag) {
+      prevFilters.current = { searchQuery, userId, sort, tag };
       setPage(1);
     }
-  }, [searchQuery, userId, sort]);
+  }, [searchQuery, userId, sort, tag]);
 
   useEffect(() => {
-    loadPosts(page, searchQuery, userId, sort);
-  }, [page, searchQuery, userId, sort]);
+    loadPosts(page, searchQuery, userId, sort, tag);
+  }, [page, searchQuery, userId, sort, tag]);
 
-  const loadPosts = async (currentPage, currentSearch, currentUserId, currentSort) => {
+  const loadPosts = async (currentPage, currentSearch, currentUserId, currentSort, currentTag) => {
     setIsLoading(true);
     try {
       const params = { page: currentPage, limit: 9 };
       if (currentUserId) params.userId = currentUserId;
       if (currentSearch) params.search = currentSearch;
+      if (currentTag) params.tag = currentTag;
       if (currentSort === 'popular') params.sort = 'likes';
       if (currentSort === 'oldest') params.order = 'asc';
 

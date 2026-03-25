@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Tag, X } from 'lucide-react';
 import { useModel } from '../../context/ModelContext';
 import { useAuth } from '../../context/AuthContext';
 import * as ordersApi from '../../api/orders.api';
+import { validatePromo } from '../../api/promo.api.js';
 
 export default function OrderForm() {
   const navigate = useNavigate();
@@ -14,6 +15,9 @@ export default function OrderForm() {
   const { modelLoaded, modelData, calcParams, price, materials, qualities } = useModel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(null); // { code, discount }
+  const [promoLoading, setPromoLoading] = useState(false);
 
   const {
     register,
@@ -29,6 +33,24 @@ export default function OrderForm() {
       comments: '',
     },
   });
+
+  const finalPrice = promoApplied
+    ? Math.round(parseFloat(price) * (1 - promoApplied.discount / 100))
+    : parseFloat(price);
+
+  const applyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    try {
+      const res = await validatePromo(promoCode.trim());
+      setPromoApplied(res.data);
+      toast.success(`Промокод применён: −${res.data.discount}%`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Промокод не найден');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
 
   const onSubmit = async (data) => {
     if (!modelLoaded) {
@@ -47,7 +69,8 @@ export default function OrderForm() {
         quantity: calcParams.quantity,
         volume: parseFloat(calcParams.volume),
         weight: parseFloat(calcParams.weight),
-        price: parseFloat(price),
+        price: finalPrice,
+        promoCode: promoApplied?.code || null,
         comments: data.comments || null,
       };
 
@@ -127,9 +150,17 @@ export default function OrderForm() {
             </>
           )}
         </div>
-        <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700 flex items-center justify-between">
-          <span className="font-semibold text-gray-700 dark:text-gray-300">Итого:</span>
-          <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{price} ₽</span>
+        <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+          {promoApplied && (
+            <div className="flex items-center justify-between text-sm mb-1">
+              <span className="text-gray-500 dark:text-gray-400">Без скидки:</span>
+              <span className="line-through text-gray-400">{price} ₽</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-gray-700 dark:text-gray-300">Итого:</span>
+            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{finalPrice} ₽</span>
+          </div>
         </div>
       </div>
 
@@ -209,6 +240,34 @@ export default function OrderForm() {
             placeholder="Дополнительные пожелания, адрес доставки, особые требования..."
             disabled={isSubmitting}
           />
+        </div>
+
+        {/* Промокод */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+            Промокод
+          </label>
+          {promoApplied ? (
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+              <Tag className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-400 flex-1">{promoApplied.code} — скидка {promoApplied.discount}%</span>
+              <button type="button" onClick={() => setPromoApplied(null)}
+                className="text-green-600 dark:text-green-400 hover:text-green-800">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input type="text" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Введите промокод..."
+                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+              />
+              <button type="button" onClick={applyPromo} disabled={!promoCode.trim() || promoLoading}
+                className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition disabled:opacity-50">
+                {promoLoading ? '...' : 'Применить'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Кнопка отправки */}

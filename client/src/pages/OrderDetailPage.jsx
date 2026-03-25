@@ -1,7 +1,7 @@
 // Страница детального просмотра заказа с трекингом
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Package, CheckCircle, Clock, Wrench, Truck, XCircle } from 'lucide-react';
+import { Package, CheckCircle, Clock, Wrench, Truck, XCircle, Printer } from 'lucide-react';
 import * as ordersApi from '../api/orders.api';
 import toast from 'react-hot-toast';
 import Breadcrumb from '../components/Breadcrumb';
@@ -153,11 +153,15 @@ export default function OrderDetailPage() {
           )}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 print:hidden">
           <Link to="/dashboard"
             className="flex-1 text-center py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition">
             ← К списку заказов
           </Link>
+          <button onClick={() => window.print()}
+            className="flex items-center justify-center gap-2 flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+            <Printer className="w-4 h-4" /> Скачать PDF
+          </button>
           <Link to="/upload"
             className="flex-1 text-center py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
             + Новый заказ

@@ -1,14 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit2, Mail, Phone, Calendar, FileText, ShoppingBag, Users, MessageCircle, Ban, CheckCircle } from 'lucide-react';
+import { Edit2, Mail, Phone, Calendar, FileText, ShoppingBag, Users, MessageCircle, Ban, CheckCircle, Bookmark, Trophy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import * as usersApi from '../api/users.api';
 import * as blocksApi from '../api/blocks.api';
+import axiosInstance from '../api/axios.js';
+import { getUserAchievements } from '../api/achievements.api.js';
 import ProfileEdit from '../components/profile/ProfileEdit';
 import AvatarUpload from '../components/profile/AvatarUpload';
 import PostCard from '../components/posts/PostCard';
 import SubscribeButton from '../components/subscriptions/SubscribeButton';
 import toast from 'react-hot-toast';
+
+const ACHIEVEMENT_META = {
+  FIRST_POST:         { emoji: '📝', label: 'Первый пост',       desc: 'Опубликовал первый пост' },
+  TEN_POSTS:          { emoji: '📚', label: '10 постов',          desc: 'Опубликовал 10 постов' },
+  FIRST_FOLLOWER_TEN: { emoji: '👥', label: '10 подписчиков',     desc: 'Набрал 10 подписчиков' },
+  FIRST_ORDER:        { emoji: '📦', label: 'Первый заказ',       desc: 'Оформил первый заказ' },
+  POPULAR_POST:       { emoji: '🔥', label: 'Популярный пост',    desc: 'Пост набрал 50 лайков' },
+  PROFILE_COMPLETE:   { emoji: '✅', label: 'Профиль заполнен',   desc: 'Заполнил все поля профиля' },
+};
+const ALL_ACHIEVEMENT_TYPES = Object.keys(ACHIEVEMENT_META);
 
 function OnlineBadge({ lastActivity }) {
   if (!lastActivity) return null;
@@ -36,6 +48,9 @@ export default function ProfilePage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [blockStatus, setBlockStatus] = useState({ iBlocked: false, theyBlocked: false });
   const [blockLoading, setBlockLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('posts');
+  const [bookmarks, setBookmarks] = useState([]);
+  const [achievements, setAchievements] = useState([]);
 
   const userId = id || currentUser?.id;
   const isOwnProfile = !id || id === currentUser?.id;
@@ -45,9 +60,13 @@ export default function ProfilePage() {
       loadProfile();
       loadUserPosts();
       if (!isOwnProfile && currentUser) {
-        blocksApi.checkBlock(userId)
-          .then(r => setBlockStatus(r.data || {}))
-          .catch(() => {});
+        blocksApi.checkBlock(userId).then(r => setBlockStatus(r.data || {})).catch(() => {});
+      }
+      // Ачивки всегда загружаем
+      getUserAchievements(userId).then(r => setAchievements(r.data?.achievements || [])).catch(() => {});
+      // Закладки только своего профиля
+      if (!id || id === currentUser?.id) {
+        axiosInstance.get('/bookmarks').then(r => setBookmarks(r.data?.data?.posts || [])).catch(() => {});
       }
     }
   }, [userId]);
@@ -233,10 +252,25 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Посты пользователя */}
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Работы</h2>
-            {theyBlockedMe ? (
+          {/* Вкладки */}
+          <div className="flex gap-1 mb-5 bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm border border-gray-200 dark:border-gray-700 w-fit">
+            {[
+              { key: 'posts', icon: FileText, label: 'Работы' },
+              ...(isOwnProfile ? [{ key: 'bookmarks', icon: Bookmark, label: 'Закладки' }] : []),
+              { key: 'achievements', icon: Trophy, label: 'Достижения' },
+            ].map(({ key, icon: Icon, label }) => (
+              <button key={key} onClick={() => setActiveTab(key)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  activeTab === key ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}>
+                <Icon className="w-4 h-4" /> {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Контент вкладки */}
+          {activeTab === 'posts' && (
+            theyBlockedMe ? (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
                 <Ban className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-500 dark:text-gray-400">Контент недоступен</p>
@@ -248,12 +282,48 @@ export default function ProfilePage() {
             ) : (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
                 <FileText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  {isOwnProfile ? 'У вас пока нет постов' : 'Пока нет постов'}
-                </p>
+                <p className="text-gray-500 dark:text-gray-400">{isOwnProfile ? 'У вас пока нет постов' : 'Пока нет постов'}</p>
               </div>
-            )}
-          </div>
+            )
+          )}
+
+          {activeTab === 'bookmarks' && isOwnProfile && (
+            bookmarks.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {bookmarks.map(post => <PostCard key={post.id} post={post} />)}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
+                <Bookmark className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">Нет сохранённых постов</p>
+              </div>
+            )
+          )}
+
+          {activeTab === 'achievements' && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {ALL_ACHIEVEMENT_TYPES.map(type => {
+                const earned = achievements.find(a => a.type === type);
+                const meta = ACHIEVEMENT_META[type];
+                return (
+                  <div key={type} title={meta.desc}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border text-center transition ${
+                      earned
+                        ? 'bg-white dark:bg-gray-800 border-yellow-200 dark:border-yellow-700/50 shadow-sm'
+                        : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-50'
+                    }`}>
+                    <span className={`text-3xl ${!earned ? 'grayscale' : ''}`}>{meta.emoji}</span>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 leading-tight">{meta.label}</p>
+                    {earned && (
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                        {new Date(earned.earnedAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

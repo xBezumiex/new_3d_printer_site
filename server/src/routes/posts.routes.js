@@ -8,8 +8,12 @@ import {
   updatePostSchema,
   getPostsQuerySchema,
 } from '../validators/posts.validator.js';
+import likesRouter from './likes.routes.js';
 
 const router = express.Router();
+
+// Теги (до /:id чтобы не перехватывался)
+router.get('/tags/list', postsController.getTags);
 
 // Публичные маршруты
 router.get('/', validate(getPostsQuerySchema, 'query'), postsController.getPosts);
@@ -20,8 +24,10 @@ router.post('/', authenticate, validate(createPostSchema), postsController.creat
 router.put('/:id', authenticate, validate(updatePostSchema), postsController.updatePost);
 router.delete('/:id', authenticate, postsController.deletePost);
 
-// Лайк поста
+// Лайк поста (legacy counter)
 router.patch('/:id/like', authenticate, postsController.likePost);
+// Новые лайки через PostLike таблицу
+router.use('/:postId/likes', likesRouter);
 
 // Комментарии
 router.get('/:id/comments', postsController.getComments);

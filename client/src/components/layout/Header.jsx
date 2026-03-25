@@ -1,9 +1,10 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, LogOut, ShoppingBag, User, Shield, Sun, Moon, Menu, X, MessageCircle } from 'lucide-react';
+import { ChevronDown, LogOut, ShoppingBag, User, Shield, Sun, Moon, Menu, X, MessageCircle, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getUnreadCount } from '../../api/messages.api.js';
+import { getUnreadCount as getUnreadMessages } from '../../api/messages.api.js';
+import { getUnreadCount as getUnreadNotifs } from '../../api/notifications.api.js';
 import SearchBar from '../search/SearchBar';
 
 const MAIN_LINKS = [
@@ -56,14 +57,18 @@ function Dropdown({ trigger, children }) {
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
   const { isAuthenticated, user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const load = () => getUnreadCount().then(r => setUnreadCount(r.data?.count || 0)).catch(() => {});
+    const load = () => {
+      getUnreadMessages().then(r => setUnreadMessages(r.data?.count || 0)).catch(() => {});
+      getUnreadNotifs().then(r => setUnreadNotifs(r.data?.count || 0)).catch(() => {});
+    };
     load();
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
@@ -107,12 +112,22 @@ export default function Header() {
 
           {isAuthenticated ? (
             <>
+              {/* Уведомления */}
+              <NavLink to="/notifications" className="relative p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <Bell className="w-5 h-5" />
+                {unreadNotifs > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                    {unreadNotifs > 99 ? '99+' : unreadNotifs}
+                  </span>
+                )}
+              </NavLink>
+
               {/* Сообщения */}
               <NavLink to="/chat" className="relative p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
                 <MessageCircle className="w-5 h-5" />
-                {unreadCount > 0 && (
+                {unreadMessages > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
-                    {unreadCount > 99 ? '99+' : unreadCount}
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
                   </span>
                 )}
               </NavLink>

@@ -1,6 +1,8 @@
 // Сервис для подписок
 import prisma from '../config/database.js';
 import { NotFoundError, BadRequestError } from '../utils/errors.js';
+import { createNotification } from './notifications.service.js';
+import { checkAndAwardAchievements } from './achievements.service.js';
 
 // Подписаться на пользователя
 export const subscribe = async (subscriberId, subscribedToId) => {
@@ -50,6 +52,11 @@ export const subscribe = async (subscriberId, subscribedToId) => {
       },
     },
   });
+
+  // Уведомление и ачивки (не блокируем ответ)
+  const subUser = await prisma.user.findUnique({ where: { id: subscriberId }, select: { name: true } });
+  createNotification(subscribedToId, 'NEW_FOLLOWER', `${subUser?.name} подписался(ась) на вас`, `/users/${subscriberId}`).catch(() => {});
+  checkAndAwardAchievements(subscribedToId).catch(() => {});
 
   return subscription;
 };

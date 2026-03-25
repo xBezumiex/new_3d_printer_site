@@ -2,6 +2,8 @@
 import prisma from '../config/database.js';
 import { NotFoundError, ForbiddenError } from '../utils/errors.js';
 import { sendOrderConfirmation, sendOrderNotificationToAdmin } from './email.service.js';
+import { createNotification } from './notifications.service.js';
+import { checkAndAwardAchievements } from './achievements.service.js';
 
 /**
  * Создание нового заказа
@@ -48,13 +50,13 @@ export const createOrder = async (userId, orderData) => {
     }
   });
 
-  // Отправка email уведомлений (асинхронно, не блокируем ответ)
+  // Отправка email + уведомления (не блокируем ответ)
   Promise.all([
     sendOrderConfirmation(user, order),
-    sendOrderNotificationToAdmin(user, order)
-  ]).catch(err => {
-    console.error('Ошибка отправки email уведомлений:', err);
-  });
+    sendOrderNotificationToAdmin(user, order),
+    createNotification(userId, 'ORDER_STATUS_CHANGED', `Заказ #${order.orderNumber} создан и ожидает подтверждения`, `/orders/${order.id}`),
+    checkAndAwardAchievements(userId),
+  ]).catch(err => console.error('Ошибка уведомлений:', err));
 
   return order;
 };
@@ -209,6 +211,15 @@ export const updateOrderStatus = async (orderId, status) => {
       console.error('Ошибка отправки email об изменении статуса:', e.message);
     }
   }
+
+  // In-app уведомление
+  const STATUS_LABELS_SHORT = { PENDING: 'Ожидает', CONFIRMED: 'Подтверждён', IN_PROGRESS: 'В работе', COMPLETED: 'Выполнен', CANCELLED: 'Отменён' };
+  createNotification(
+    updatedOrder.userId,
+    'ORDER_STATUS_CHANGED',
+    `Заказ #${updatedOrder.orderNumber}: статус изменён на «${STATUS_LABELS_SHORT[status] || status}»`,
+    `/orders/${updatedOrder.id}`
+  ).catch(() => {});
 
   return updatedOrder;
 };
