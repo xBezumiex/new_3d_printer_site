@@ -98,6 +98,7 @@ const healthHandler = (req, res) => {
     message: '3D Print Lab API работает',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
+    version: 'v2-notifications-bookmarks',
   });
 };
 app.get('/health', healthHandler);
