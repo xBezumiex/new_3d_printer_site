@@ -39,11 +39,6 @@ axiosInstance.interceptors.response.use(
         window.location.href = '/login';
       }
 
-      // Не логируем 404 и сетевые ошибки поллинга — они ожидаемы
-      if (status >= 500) {
-        console.error('❌ Server error:', status, error.config?.url);
-      }
-
       return Promise.reject({
         message: data?.error || data?.message || 'Произошла ошибка',
         status,
