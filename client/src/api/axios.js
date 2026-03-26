@@ -3,8 +3,6 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-console.log('🔧 Axios API URL:', API_URL);
-
 // Создание экземпляра axios
 const axiosInstance = axios.create({
   baseURL: API_URL,
@@ -30,15 +28,10 @@ axiosInstance.interceptors.request.use(
 
 // Response interceptor - обработка ошибок
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('❌ Axios error:', error);
-
     if (error.response) {
       const { status, data } = error.response;
-      console.error('Response error:', { status, data });
 
       if (status === 401) {
         localStorage.removeItem('token');
@@ -46,24 +39,23 @@ axiosInstance.interceptors.response.use(
         window.location.href = '/login';
       }
 
+      // Не логируем 404 и сетевые ошибки поллинга — они ожидаемы
+      if (status >= 500) {
+        console.error('❌ Server error:', status, error.config?.url);
+      }
+
       return Promise.reject({
-        message: data.error || data.message || 'Произошла ошибка',
+        message: data?.error || data?.message || 'Произошла ошибка',
         status,
         data
       });
-    } else if (error.request) {
-      console.error('Request error (no response):', error.request);
-      return Promise.reject({
-        message: 'Сервер не отвечает. Проверьте подключение.',
-        status: 0
-      });
-    } else {
-      console.error('Error setting up request:', error.message);
-      return Promise.reject({
-        message: error.message || 'Произошла ошибка',
-        status: 0
-      });
     }
+
+    // Сетевые ошибки (ERR_INTERNET_DISCONNECTED и т.п.) — тихо игнорируем
+    return Promise.reject({
+      message: 'Сервер не отвечает',
+      status: 0
+    });
   }
 );
 
