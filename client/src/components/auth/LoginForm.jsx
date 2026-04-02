@@ -1,10 +1,24 @@
-// Форма входа с показом/скрытием пароля и редиректом обратно
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+
+const inputStyle = (hasError) => ({
+  width: '100%', padding: '11px 14px',
+  background: 'var(--surface)',
+  border: `1px solid ${hasError ? 'rgba(239,68,68,0.6)' : 'var(--border)'}`,
+  borderRadius: 10, fontSize: 14, color: 'var(--text-1)',
+  outline: 'none', fontFamily: 'DM Sans, sans-serif',
+  transition: 'border-color 0.2s',
+});
+
+const labelStyle = {
+  display: 'block', fontFamily: 'DM Mono, monospace',
+  fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase',
+  color: 'var(--text-3)', marginBottom: 8,
+};
 
 export default function LoginForm() {
   const navigate = useNavigate();
@@ -14,17 +28,13 @@ export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({ mode: 'onChange' });
+  const { register, handleSubmit, formState: { errors } } = useForm({ mode: 'onChange' });
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
       await login(data);
-      toast.success('Вы успешно вошли в систему!');
+      toast.success('Добро пожаловать!');
       navigate(from, { replace: true });
     } catch (error) {
       toast.error(error.message || 'Ошибка входа. Проверьте данные.');
@@ -33,101 +43,82 @@ export default function LoginForm() {
     }
   };
 
-  const inputClass = (hasError) =>
-    `w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors ${
-      hasError
-        ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/10'
-        : 'border-gray-300 dark:border-gray-600'
-    }`;
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {/* Email */}
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Email
-        </label>
+        <label style={labelStyle}>Email</label>
         <input
-          id="email"
-          type="email"
-          autoComplete="email"
+          type="email" autoComplete="email"
+          placeholder="your@email.com"
           {...register('email', {
             required: 'Email обязателен',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Некорректный email адрес',
-            },
+            pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Некорректный email' },
           })}
-          className={inputClass(errors.email)}
-          placeholder="your@email.com"
+          style={inputStyle(errors.email)}
+          onFocus={e => { if (!errors.email) e.target.style.borderColor = 'var(--accent)'; }}
+          onBlur={e => { if (!errors.email) e.target.style.borderColor = 'var(--border)'; }}
         />
         {errors.email && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-            <span className="shrink-0">⚠</span> {errors.email.message}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, color: '#f87171', fontSize: 12 }}>
+            <AlertCircle size={12} /> {errors.email.message}
+          </div>
         )}
       </div>
 
-      {/* Пароль */}
+      {/* Password */}
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Пароль
-        </label>
-        <div className="relative">
+        <label style={labelStyle}>Пароль</label>
+        <div style={{ position: 'relative' }}>
           <input
-            id="password"
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
+            placeholder="••••••••"
             {...register('password', {
               required: 'Пароль обязателен',
-              minLength: {
-                value: 6,
-                message: 'Минимум 6 символов',
-              },
+              minLength: { value: 6, message: 'Минимум 6 символов' },
             })}
-            className={`${inputClass(errors.password)} pr-11`}
-            placeholder="••••••••"
+            style={{ ...inputStyle(errors.password), paddingRight: 42 }}
+            onFocus={e => { if (!errors.password) e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { if (!errors.password) e.target.style.borderColor = 'var(--border)'; }}
           />
           <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-            tabIndex={-1}
-            aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}
+            style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', padding: 2 }}
           >
-            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         </div>
         {errors.password && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-            <span className="shrink-0">⚠</span> {errors.password.message}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, color: '#f87171', fontSize: 12 }}>
+            <AlertCircle size={12} /> {errors.password.message}
+          </div>
         )}
       </div>
 
-      {/* Кнопка входа */}
+      {/* Submit */}
       <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+        type="submit" disabled={isSubmitting}
+        style={{
+          width: '100%', padding: '13px 0',
+          background: isSubmitting ? 'rgba(249,115,22,0.5)' : 'var(--accent)',
+          color: '#fff', fontWeight: 700, fontSize: 15,
+          borderRadius: 10, border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          boxShadow: '0 4px 20px var(--accent-glow)',
+          transition: 'background 0.2s, box-shadow 0.2s',
+          fontFamily: 'DM Sans, sans-serif',
+        }}
+        onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.background = '#ea580c'; }}
+        onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.background = 'var(--accent)'; }}
       >
         {isSubmitting ? (
           <>
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rotateSlow 0.8s linear infinite', display: 'block' }} />
             Выполняется вход...
           </>
-        ) : (
-          'Войти'
-        )}
+        ) : 'Войти'}
       </button>
-
-      {/* Ссылка на регистрацию */}
-      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-        Нет аккаунта?{' '}
-        <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium transition-colors">
-          Зарегистрироваться
-        </Link>
-      </p>
     </form>
   );
 }

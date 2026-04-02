@@ -1,4 +1,4 @@
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, LogOut, ShoppingBag, User, Shield, Sun, Moon, Menu, X, MessageCircle, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -21,16 +21,6 @@ const MORE_LINKS = [
   { to: '/contact',  label: 'Контакты' },
 ];
 
-const linkCls = ({ isActive }) =>
-  `text-sm font-medium transition-all whitespace-nowrap px-3 py-1.5 rounded-lg ${isActive
-    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'}`;
-
-const mobileLinkCls = ({ isActive }) =>
-  `block py-2.5 px-3 rounded-lg text-sm transition-colors ${isActive
-    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
-    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
-
 function Dropdown({ trigger, children }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -43,11 +33,35 @@ function Dropdown({ trigger, children }) {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(v => !v)} className="flex items-center gap-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-all px-3 py-1.5 rounded-lg">
-        {trigger} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          fontSize: 13, fontWeight: 500,
+          color: 'var(--text-2)',
+          padding: '5px 10px',
+          borderRadius: 8,
+          transition: 'color 0.15s, background 0.15s',
+          background: 'transparent',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface)'; }}
+        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.background = 'transparent'; }}
+      >
+        {trigger}
+        <ChevronDown style={{ width: 13, height: 13, transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }} />
       </button>
       {open && (
-        <div className="absolute top-full right-0 mt-2 w-44 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl py-1 z-50" onClick={() => setOpen(false)}>
+        <div
+          className="glass"
+          style={{
+            position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+            width: 176, borderRadius: 12,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+            padding: '4px 0', zIndex: 50,
+            animation: 'fadeUp 0.2s ease both',
+          }}
+          onClick={() => setOpen(false)}
+        >
           {children}
         </div>
       )}
@@ -55,13 +69,61 @@ function Dropdown({ trigger, children }) {
   );
 }
 
+function DropdownItem({ to, children, onClick }) {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      style={{ display: 'block', padding: '8px 16px', fontSize: 13, color: 'var(--text-2)', transition: 'color 0.15s, background 0.15s' }}
+      onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--surface)'; }}
+      onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.background = 'transparent'; }}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function NavItem({ to, label }) {
+  const location = useLocation();
+  const isActive = location.pathname === to || location.pathname.startsWith(to + '/');
+  return (
+    <NavLink
+      to={to}
+      style={{
+        position: 'relative', fontSize: 13, fontWeight: 500,
+        color: isActive ? 'var(--text-1)' : 'var(--text-2)',
+        padding: '5px 10px', borderRadius: 8,
+        transition: 'color 0.15s',
+        textDecoration: 'none',
+      }}
+    >
+      {label}
+      {isActive && (
+        <span style={{
+          position: 'absolute', bottom: -1, left: 10, right: 10,
+          height: 2, borderRadius: 2,
+          background: 'var(--accent)',
+          boxShadow: '0 0 8px var(--accent-glow)',
+        }} />
+      )}
+    </NavLink>
+  );
+}
+
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const { isAuthenticated, user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -78,152 +140,246 @@ export default function Header() {
   const handleLogout = () => { logout(); close(); navigate('/'); };
 
   const avatar = user?.avatar
-    ? <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover ring-2 ring-white dark:ring-gray-700" />
-    : <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-gray-700">{user?.name?.[0]?.toUpperCase() || '?'}</div>;
+    ? <img src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border-2)' }} />
+    : (
+      <div style={{
+        width: 28, height: 28, borderRadius: '50%',
+        background: 'linear-gradient(135deg, var(--accent), #fb923c)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 11, fontWeight: 700, color: '#fff',
+        border: '1.5px solid var(--border-2)',
+        fontFamily: 'DM Mono, monospace',
+      }}>
+        {user?.name?.[0]?.toUpperCase() || '?'}
+      </div>
+    );
 
   return (
-    <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200/60 dark:border-gray-700/60 sticky top-0 z-50">
-      <nav className="container mx-auto px-4 h-14 flex items-center gap-4">
+    <header
+      style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        background: scrolled ? 'rgba(10,10,15,0.85)' : 'rgba(10,10,15,0.6)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        borderBottom: `1px solid ${scrolled ? 'rgba(255,255,255,0.08)' : 'transparent'}`,
+        transition: 'background 0.3s, border-color 0.3s, box-shadow 0.3s',
+        boxShadow: scrolled ? '0 4px 30px rgba(0,0,0,0.3)' : 'none',
+      }}
+    >
+      {/* macOS traffic lights row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57', display: 'block' }} />
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e', display: 'block' }} />
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840', display: 'block' }} />
+        <span style={{ marginLeft: 'auto', fontFamily: 'DM Mono, monospace', fontSize: 10, color: 'var(--text-3)', letterSpacing: '0.1em' }}>3D PRINT LAB</span>
+      </div>
 
-        {/* Лого */}
-        <Link to="/" onClick={close} className="text-lg font-black tracking-tight text-blue-600 dark:text-blue-400 shrink-0 mr-1">
-          3D Print Lab
+      <nav style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px', height: 46, maxWidth: 1280, margin: '0 auto' }}>
+
+        {/* Logo */}
+        <Link to="/" onClick={close} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0, marginRight: 4 }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: 7,
+            background: 'linear-gradient(135deg,#f97316,#fb923c)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 10px rgba(249,115,22,0.4)',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+              <path d="M16 4L28 10V22L16 28L4 22V10L16 4Z" stroke="white" strokeWidth="2.5" fill="none"/>
+              <path d="M16 4V28M4 10L28 22M28 10L4 22" stroke="white" strokeWidth="1.5" opacity="0.45"/>
+            </svg>
+          </div>
+          <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, letterSpacing: '0.08em', color: 'var(--text-1)' }}>
+            PRINT<span style={{ color: 'var(--accent)' }}>LAB</span>
+          </span>
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-5 flex-1">
-          {MAIN_LINKS.map(({ to, label }) => (
-            <NavLink key={to} to={to} className={linkCls}>{label}</NavLink>
-          ))}
+        <div className="hidden md:flex" style={{ alignItems: 'center', gap: 2, flex: 1 }}>
+          {MAIN_LINKS.map(({ to, label }) => <NavItem key={to} to={to} label={label} />)}
           <Dropdown trigger="Ещё">
-            {MORE_LINKS.map(({ to, label }) => (
-              <Link key={to} to={to} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/60 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                {label}
-              </Link>
-            ))}
+            {MORE_LINKS.map(({ to, label }) => <DropdownItem key={to} to={to}>{label}</DropdownItem>)}
           </Dropdown>
         </div>
 
-        {/* Правая часть */}
-        <div className="hidden md:flex items-center gap-2 ml-auto">
-          <SearchBar className="w-44" />
+        {/* Right side */}
+        <div className="hidden md:flex" style={{ alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+          <SearchBar className="w-40" />
 
-          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
+          <div style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 4px' }} />
 
           {isAuthenticated ? (
             <>
-              {/* Уведомления */}
-              <NavLink to="/notifications" className="relative p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
+              <NavLink to="/notifications" style={{ position: 'relative', padding: 6, color: 'var(--text-3)', borderRadius: 8, display: 'flex', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}
+              >
+                <Bell size={16} />
                 {unreadNotifs > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                  <span style={{
+                    position: 'absolute', top: 2, right: 2,
+                    background: 'var(--accent)', color: '#fff',
+                    fontSize: 9, fontWeight: 700, fontFamily: 'DM Mono, monospace',
+                    borderRadius: '50%', minWidth: 14, height: 14,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px',
+                  }}>
                     {unreadNotifs > 99 ? '99+' : unreadNotifs}
                   </span>
                 )}
               </NavLink>
 
-              {/* Сообщения */}
-              <NavLink to="/chat" className="relative p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <MessageCircle className="w-5 h-5" />
+              <NavLink to="/chat" style={{ position: 'relative', padding: 6, color: 'var(--text-3)', borderRadius: 8, display: 'flex', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}
+              >
+                <MessageCircle size={16} />
                 {unreadMessages > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                  <span style={{
+                    position: 'absolute', top: 2, right: 2,
+                    background: 'var(--accent)', color: '#fff',
+                    fontSize: 9, fontWeight: 700, fontFamily: 'DM Mono, monospace',
+                    borderRadius: '50%', minWidth: 14, height: 14,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px',
+                  }}>
                     {unreadMessages > 99 ? '99+' : unreadMessages}
                   </span>
                 )}
               </NavLink>
 
               {user?.role === 'ADMIN' && (
-                <NavLink to="/admin"
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold border border-red-200 dark:border-red-800/60 hover:bg-red-100 dark:hover:bg-red-900/40 transition">
-                  <Shield className="w-3.5 h-3.5" />
-                  Админ
+                <NavLink to="/admin" style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '4px 10px', borderRadius: 7,
+                  background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)',
+                  color: '#f87171', fontSize: 11, fontWeight: 600,
+                  fontFamily: 'DM Mono, monospace', letterSpacing: '0.05em',
+                  textDecoration: 'none',
+                }}>
+                  <Shield size={12} /> ADMIN
                 </NavLink>
               )}
 
-              <Dropdown trigger={
-                <span className="flex items-center gap-1.5">
-                  {avatar}
-                  <ChevronDown className="w-3 h-3 text-gray-400 -ml-1 hidden" />
-                </span>
-              }>
-                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 mb-1">
-                  <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{user?.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+              <Dropdown trigger={<span style={{ display: 'flex', alignItems: 'center' }}>{avatar}</span>}>
+                <div style={{ padding: '8px 16px 8px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'DM Mono, monospace' }}>{user?.email}</p>
                 </div>
-                <Link to="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/60 hover:text-blue-600 transition-colors">
-                  <User className="w-4 h-4" /> Профиль
-                </Link>
-                <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/60 hover:text-blue-600 transition-colors">
-                  <ShoppingBag className="w-4 h-4" /> Мои заказы
-                </Link>
-                <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
-                <button onClick={handleLogout} className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                  <LogOut className="w-4 h-4" /> Выйти
+                <DropdownItem to="/profile"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><User size={13} /> Профиль</span></DropdownItem>
+                <DropdownItem to="/dashboard"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ShoppingBag size={13} /> Мои заказы</span></DropdownItem>
+                <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    width: '100%', padding: '8px 16px',
+                    fontSize: 13, color: '#f87171',
+                    background: 'transparent', cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <LogOut size={13} /> Выйти
                 </button>
               </Dropdown>
             </>
           ) : (
             <>
-              <NavLink to="/login" className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors px-1">
+              <NavLink to="/login" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-2)', textDecoration: 'none', padding: '5px 10px', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-1)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-2)'}
+              >
                 Войти
               </NavLink>
-              <Link to="/register" className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-sm font-medium transition shadow-sm">
+              <Link to="/register" style={{
+                padding: '6px 14px', borderRadius: 8,
+                background: 'var(--accent)',
+                color: '#fff', fontSize: 13, fontWeight: 600,
+                textDecoration: 'none',
+                boxShadow: '0 2px 12px var(--accent-glow)',
+                transition: 'background 0.2s, box-shadow 0.2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#ea580c'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent)'; }}
+              >
                 Регистрация
               </Link>
             </>
           )}
 
-          <button onClick={toggleTheme}
-            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Тема">
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          <button
+            onClick={toggleTheme}
+            style={{
+              padding: 6, borderRadius: 8,
+              color: 'var(--text-3)', background: 'transparent',
+              display: 'flex', cursor: 'pointer',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}
+            aria-label="Тема"
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
           </button>
         </div>
 
-        {/* Mobile кнопки */}
-        <div className="md:hidden flex items-center gap-1.5 ml-auto">
-          <button onClick={toggleTheme}
-            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        {/* Mobile buttons */}
+        <div className="md:hidden" style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+          <button onClick={toggleTheme} style={{ padding: 6, color: 'var(--text-3)', display: 'flex', background: 'transparent', cursor: 'pointer' }}>
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
           </button>
-          <button onClick={() => setMobileOpen(v => !v)}
-            className="p-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <button
+            onClick={() => setMobileOpen(v => !v)}
+            style={{ padding: 6, color: 'var(--text-2)', display: 'flex', background: 'transparent', cursor: 'pointer' }}
+          >
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile меню */}
+      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-900 px-4 pb-4 space-y-1">
-          <div className="pt-3 pb-2">
+        <div className="md:hidden glass" style={{ borderTop: '1px solid var(--border)', padding: '12px 16px 16px' }}>
+          <div style={{ paddingBottom: 10 }}>
             <SearchBar className="w-full" onSearch={close} />
           </div>
-          {[...MAIN_LINKS, ...MORE_LINKS].map(({ to, label }) => (
-            <NavLink key={to} to={to} className={mobileLinkCls} onClick={close}>{label}</NavLink>
-          ))}
-          <div className="border-t border-gray-100 dark:border-gray-700 my-2" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {[...MAIN_LINKS, ...MORE_LINKS].map(({ to, label }) => (
+              <NavLink key={to} to={to} onClick={close}
+                style={({ isActive }) => ({
+                  display: 'block', padding: '9px 12px', borderRadius: 8,
+                  fontSize: 14, fontWeight: isActive ? 600 : 400,
+                  color: isActive ? 'var(--accent)' : 'var(--text-2)',
+                  background: isActive ? 'var(--accent-dim)' : 'transparent',
+                  textDecoration: 'none',
+                })}
+              >
+                {label}
+              </NavLink>
+            ))}
+          </div>
+          <div style={{ height: 1, background: 'var(--border)', margin: '10px 0' }} />
           {isAuthenticated ? (
             <>
               {user?.role === 'ADMIN' && (
-                <NavLink to="/admin" className="flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" onClick={close}>
-                  <Shield className="w-4 h-4" /> Панель администратора
+                <NavLink to="/admin" onClick={close} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#f87171', textDecoration: 'none' }}>
+                  <Shield size={14} /> Панель администратора
                 </NavLink>
               )}
-              <NavLink to="/profile" className={mobileLinkCls} onClick={close}>
-                <span className="flex items-center gap-2"><User className="w-4 h-4" /> {user?.name || 'Профиль'}</span>
+              <NavLink to="/profile" onClick={close} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 14, color: 'var(--text-2)', textDecoration: 'none' }}>
+                <User size={14} /> {user?.name || 'Профиль'}
               </NavLink>
-              <NavLink to="/dashboard" className={mobileLinkCls} onClick={close}>
-                <span className="flex items-center gap-2"><ShoppingBag className="w-4 h-4" /> Мои заказы</span>
+              <NavLink to="/dashboard" onClick={close} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 14, color: 'var(--text-2)', textDecoration: 'none' }}>
+                <ShoppingBag size={14} /> Мои заказы
               </NavLink>
-              <button onClick={handleLogout} className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                <LogOut className="w-4 h-4" /> Выйти
+              <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 14, color: '#f87171', background: 'transparent', cursor: 'pointer', width: '100%' }}>
+                <LogOut size={14} /> Выйти
               </button>
             </>
           ) : (
             <>
-              <NavLink to="/login" className={mobileLinkCls} onClick={close}>Войти</NavLink>
-              <Link to="/register" className="block py-2.5 px-3 bg-blue-600 text-white text-center text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors" onClick={close}>
+              <NavLink to="/login" onClick={close} style={{ display: 'block', padding: '9px 12px', borderRadius: 8, fontSize: 14, color: 'var(--text-2)', textDecoration: 'none' }}>Войти</NavLink>
+              <Link to="/register" onClick={close} style={{ display: 'block', padding: '10px 12px', borderRadius: 8, fontSize: 14, fontWeight: 600, background: 'var(--accent)', color: '#fff', textAlign: 'center', textDecoration: 'none', marginTop: 4 }}>
                 Зарегистрироваться
               </Link>
             </>

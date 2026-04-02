@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, User, Image as ImageIcon, Heart, Bookmark, Flag } from 'lucide-react';
+import { Image as ImageIcon, Heart, Bookmark, Flag, User, Calendar } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toggleLike, checkLike, toggleBookmark, checkBookmark } from '../../api/posts.api.js';
 import { createReport } from '../../api/reports.api.js';
@@ -22,8 +22,9 @@ export default function PostCard({ post }) {
   const [busy, setBusy] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
+  const [hovered, setHovered] = useState(false);
 
-  const formatDate = (d) => new Date(d).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+  const formatDate = (d) => new Date(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
   const firstImage = getImgUrl(post.images?.[0]?.url);
   const imageCount = post._count?.images || post.images?.length || 0;
 
@@ -84,71 +85,164 @@ export default function PostCard({ post }) {
   };
 
   return (
-    <div className="relative group">
+    <div style={{ position: 'relative' }}>
       <Link
         to={`/posts/${post.id}`}
-        className="block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          display: 'block', textDecoration: 'none',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 16,
+          overflow: 'hidden',
+          transition: 'transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease, border-color 0.35s ease',
+          transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+          boxShadow: hovered ? '0 16px 48px rgba(0,0,0,0.35)' : '0 2px 8px rgba(0,0,0,0.15)',
+          borderColor: hovered ? 'var(--border-2)' : 'var(--border)',
+        }}
       >
-        {/* Изображение */}
-        {firstImage ? (
-          <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600">
-            <img src={firstImage} alt={post.title} loading="lazy" className="w-full h-full object-cover"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            {imageCount > 1 && (
-              <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
-                <ImageIcon className="w-4 h-4" /> <span>{imageCount}</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <ImageIcon className="w-16 h-16 text-white/30" />
-          </div>
-        )}
+        {/* Image */}
+        <div style={{ position: 'relative', height: 200, background: 'linear-gradient(135deg, #1e1e2e, #161622)', overflow: 'hidden' }}>
+          {firstImage ? (
+            <>
+              <img
+                src={firstImage} alt={post.title} loading="lazy"
+                style={{
+                  width: '100%', height: '100%', objectFit: 'cover',
+                  transition: 'transform 0.5s ease',
+                  transform: hovered ? 'scale(1.04)' : 'scale(1)',
+                }}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+              {/* Overlay gradient */}
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(to top, rgba(10,10,15,0.5) 0%, transparent 50%)',
+                opacity: hovered ? 1 : 0, transition: 'opacity 0.3s ease',
+              }} />
+            </>
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ImageIcon size={48} color="rgba(255,255,255,0.12)" />
+            </div>
+          )}
+          {imageCount > 1 && (
+            <div style={{
+              position: 'absolute', bottom: 10, right: 10,
+              background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)',
+              color: '#fff', fontSize: 11, fontFamily: 'DM Mono, monospace',
+              padding: '3px 8px', borderRadius: 6,
+              display: 'flex', alignItems: 'center', gap: 4,
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}>
+              <ImageIcon size={11} /> {imageCount}
+            </div>
+          )}
+          {/* Orange bottom line on hover */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            height: 2,
+            background: 'linear-gradient(90deg, var(--accent), #fb923c)',
+            transform: hovered ? 'scaleX(1)' : 'scaleX(0)',
+            transformOrigin: 'left',
+            transition: 'transform 0.4s cubic-bezier(.22,1,.36,1)',
+          }} />
+        </div>
 
-        {/* Контент */}
-        <div className="p-4">
-          <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1.5 line-clamp-2">{post.title}</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 text-sm">{post.description || ''}</p>
+        {/* Content */}
+        <div style={{ padding: '16px 18px 14px' }}>
+          <h3 style={{
+            fontSize: 15, fontWeight: 600, color: 'var(--text-1)',
+            marginBottom: 6, lineHeight: 1.4,
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
+            {post.title}
+          </h3>
+          {post.description && (
+            <p style={{
+              fontSize: 13, color: 'var(--text-3)', marginBottom: 10, lineHeight: 1.6,
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            }}>
+              {post.description}
+            </p>
+          )}
 
-          {/* Теги */}
+          {/* Tags */}
           {post.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
               {post.tags.slice(0, 3).map(tag => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                <span key={tag} style={{
+                  fontSize: 10, fontFamily: 'DM Mono, monospace',
+                  padding: '2px 8px', borderRadius: 4,
+                  background: 'var(--accent-dim)', color: 'var(--accent)',
+                  border: '1px solid rgba(249,115,22,0.2)',
+                  letterSpacing: '0.05em',
+                }}>
                   #{tag}
                 </span>
               ))}
             </div>
           )}
 
-          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-500">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <User className="w-3.5 h-3.5" />
-                <span className="text-xs">{post.user?.name || 'Автор'}</span>
+          {/* Meta */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-3)' }}>
+                <User size={11} />
+                <span style={{ fontSize: 11, fontFamily: 'DM Mono, monospace' }}>{post.user?.name || 'Автор'}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                <span className="text-xs">{formatDate(post.createdAt)}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-3)' }}>
+                <Calendar size={11} />
+                <span style={{ fontSize: 11, fontFamily: 'DM Mono, monospace' }}>{formatDate(post.createdAt)}</span>
               </div>
             </div>
 
-            {/* Действия */}
-            <div className="flex items-center gap-1" onClick={e => e.preventDefault()}>
-              <button onClick={handleLike}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full transition ${liked ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'}`}>
-                <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-current' : ''}`} />
-                <span className="text-xs font-medium">{likes}</span>
+            {/* Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.preventDefault()}>
+              <button
+                onClick={handleLike}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '4px 8px', borderRadius: 6,
+                  fontSize: 11, fontFamily: 'DM Mono, monospace',
+                  background: liked ? 'rgba(239,68,68,0.12)' : 'transparent',
+                  color: liked ? '#f87171' : 'var(--text-3)',
+                  border: liked ? '1px solid rgba(239,68,68,0.25)' : '1px solid transparent',
+                  cursor: 'pointer', transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={e => { if (!liked) e.currentTarget.style.color = '#f87171'; }}
+                onMouseLeave={e => { if (!liked) e.currentTarget.style.color = 'var(--text-3)'; }}
+              >
+                <Heart size={12} style={{ fill: liked ? '#f87171' : 'none' }} />
+                {likes}
               </button>
-              <button onClick={handleBookmark}
-                className={`p-1.5 rounded-full transition ${bookmarked ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'}`}>
-                <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? 'fill-current' : ''}`} />
+              <button
+                onClick={handleBookmark}
+                style={{
+                  padding: '4px 6px', borderRadius: 6,
+                  background: bookmarked ? 'rgba(245,158,11,0.12)' : 'transparent',
+                  color: bookmarked ? '#fbbf24' : 'var(--text-3)',
+                  border: bookmarked ? '1px solid rgba(245,158,11,0.25)' : '1px solid transparent',
+                  cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex',
+                }}
+              >
+                <Bookmark size={12} style={{ fill: bookmarked ? '#fbbf24' : 'none' }} />
               </button>
               {isAuthenticated && (
-                <button onClick={(e) => { e.preventDefault(); setReportOpen(true); }}
-                  className="p-1.5 rounded-full text-gray-300 hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition opacity-0 group-hover:opacity-100">
-                  <Flag className="w-3.5 h-3.5" />
+                <button
+                  onClick={(e) => { e.preventDefault(); setReportOpen(true); }}
+                  style={{
+                    padding: '4px 6px', borderRadius: 6,
+                    background: 'transparent', color: 'var(--text-3)',
+                    border: '1px solid transparent',
+                    cursor: 'pointer', display: 'flex',
+                    opacity: hovered ? 1 : 0, transition: 'opacity 0.2s ease, color 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#f97316'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}
+                >
+                  <Flag size={12} />
                 </button>
               )}
             </div>
@@ -156,24 +250,43 @@ export default function PostCard({ post }) {
         </div>
       </Link>
 
-      {/* Модалка жалобы */}
+      {/* Report modal */}
       {reportOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setReportOpen(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Пожаловаться на пост</h3>
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={() => setReportOpen(false)}
+        >
+          <div
+            className="glass"
+            style={{ borderRadius: 16, padding: 24, maxWidth: 360, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', animation: 'fadeUp 0.25s ease both' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-1)', marginBottom: 14 }}>Пожаловаться на пост</h3>
             <textarea
               value={reportReason}
               onChange={e => setReportReason(e.target.value)}
               placeholder="Опишите причину жалобы..."
-              className="w-full h-24 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
+              style={{
+                width: '100%', height: 90, padding: '10px 12px',
+                fontSize: 13, color: 'var(--text-1)',
+                background: 'var(--surface)', border: '1px solid var(--border-2)',
+                borderRadius: 10, resize: 'none', outline: 'none',
+                fontFamily: 'DM Sans, sans-serif',
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border-2)'}
             />
-            <div className="flex gap-2 mt-3">
-              <button onClick={() => setReportOpen(false)}
-                className="flex-1 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 transition">
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button
+                onClick={() => setReportOpen(false)}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: 'var(--surface)', color: 'var(--text-2)', fontSize: 13, fontWeight: 500, border: '1px solid var(--border)', cursor: 'pointer' }}
+              >
                 Отмена
               </button>
-              <button onClick={handleReport}
-                className="flex-1 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition">
+              <button
+                onClick={handleReport}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: 'rgba(239,68,68,0.85)', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+              >
                 Отправить
               </button>
             </div>
