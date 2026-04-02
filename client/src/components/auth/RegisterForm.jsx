@@ -1,14 +1,27 @@
-// Форма регистрации с индикатором силы пароля и показом/скрытием
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+
+const inputStyle = (hasError) => ({
+  width: '100%', padding: '11px 14px',
+  background: 'var(--surface)',
+  border: `1px solid ${hasError ? 'rgba(239,68,68,0.6)' : 'var(--border)'}`,
+  borderRadius: 10, fontSize: 14, color: 'var(--text-1)',
+  outline: 'none', fontFamily: 'DM Sans, sans-serif',
+  transition: 'border-color 0.2s',
+});
+
+const labelStyle = {
+  display: 'block', fontFamily: 'DM Mono, monospace',
+  fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase',
+  color: 'var(--text-3)', marginBottom: 8,
+};
 
 function PasswordStrength({ password }) {
   if (!password) return null;
-
   let strength = 0;
   if (password.length >= 6) strength++;
   if (password.length >= 10) strength++;
@@ -16,28 +29,23 @@ function PasswordStrength({ password }) {
   if (/[0-9]/.test(password)) strength++;
   if (/[^A-Za-z0-9]/.test(password)) strength++;
 
-  const levels = [
-    { label: 'Очень слабый', color: 'bg-red-500', text: 'text-red-600 dark:text-red-400' },
-    { label: 'Слабый',       color: 'bg-orange-500', text: 'text-orange-600 dark:text-orange-400' },
-    { label: 'Средний',      color: 'bg-yellow-500', text: 'text-yellow-600 dark:text-yellow-400' },
-    { label: 'Хороший',      color: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Отличный',     color: 'bg-green-500', text: 'text-green-600 dark:text-green-400' },
-  ];
   const level = Math.min(strength, 4);
+  const colors = ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#22c55e'];
+  const labels = ['Очень слабый', 'Слабый', 'Средний', 'Хороший', 'Отличный'];
 
   return (
-    <div className="mt-2">
-      <div className="flex gap-1 mb-1">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-              i <= level ? levels[level].color : 'bg-gray-200 dark:bg-gray-600'
-            }`}
-          />
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 3, marginBottom: 5 }}>
+        {[0,1,2,3,4].map(i => (
+          <div key={i} style={{
+            flex: 1, height: 3, borderRadius: 2,
+            background: i <= level ? colors[level] : 'var(--surface)',
+            transition: 'background 0.3s ease',
+            boxShadow: i <= level ? `0 0 6px ${colors[level]}60` : 'none',
+          }} />
         ))}
       </div>
-      <p className={`text-xs ${levels[level].text}`}>{levels[level].label}</p>
+      <p style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: colors[level], letterSpacing: '0.05em' }}>{labels[level]}</p>
     </div>
   );
 }
@@ -49,13 +57,7 @@ export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({ mode: 'onChange' });
-
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({ mode: 'onChange' });
   const password = watch('password', '');
 
   const onSubmit = async (data) => {
@@ -63,7 +65,7 @@ export default function RegisterForm() {
     try {
       const { confirmPassword, ...userData } = data;
       await registerUser(userData);
-      toast.success('Регистрация успешна! Добро пожаловать!');
+      toast.success('Добро пожаловать в PrintLab!');
       navigate('/dashboard');
     } catch (error) {
       toast.error(error.message || 'Ошибка регистрации. Попробуйте снова.');
@@ -72,175 +74,127 @@ export default function RegisterForm() {
     }
   };
 
-  const inputClass = (hasError) =>
-    `w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors ${
-      hasError
-        ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/10'
-        : 'border-gray-300 dark:border-gray-600'
-    }`;
+  const ErrorMsg = ({ error }) => error ? (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, color: '#f87171', fontSize: 12 }}>
+      <AlertCircle size={12} /> {error.message}
+    </div>
+  ) : null;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      {/* Имя */}
+    <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Name */}
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Имя
-        </label>
+        <label style={labelStyle}>Имя</label>
         <input
-          id="name"
-          type="text"
-          autoComplete="name"
-          {...register('name', {
-            required: 'Имя обязательно',
-            minLength: { value: 2, message: 'Минимум 2 символа' },
-          })}
-          className={inputClass(errors.name)}
-          placeholder="Иван Иванов"
+          type="text" autoComplete="name" placeholder="Иван Иванов"
+          {...register('name', { required: 'Имя обязательно', minLength: { value: 2, message: 'Минимум 2 символа' } })}
+          style={inputStyle(errors.name)}
+          onFocus={e => { if (!errors.name) e.target.style.borderColor = 'var(--accent)'; }}
+          onBlur={e => { if (!errors.name) e.target.style.borderColor = 'var(--border)'; }}
         />
-        {errors.name && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">⚠ {errors.name.message}</p>
-        )}
+        <ErrorMsg error={errors.name} />
       </div>
 
       {/* Email */}
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Email
-        </label>
+        <label style={labelStyle}>Email</label>
         <input
-          id="email"
-          type="email"
-          autoComplete="email"
+          type="email" autoComplete="email" placeholder="your@email.com"
           {...register('email', {
             required: 'Email обязателен',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Некорректный email адрес',
-            },
+            pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Некорректный email' },
           })}
-          className={inputClass(errors.email)}
-          placeholder="your@email.com"
+          style={inputStyle(errors.email)}
+          onFocus={e => { if (!errors.email) e.target.style.borderColor = 'var(--accent)'; }}
+          onBlur={e => { if (!errors.email) e.target.style.borderColor = 'var(--border)'; }}
         />
-        {errors.email && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">⚠ {errors.email.message}</p>
-        )}
+        <ErrorMsg error={errors.email} />
       </div>
 
-      {/* Телефон */}
+      {/* Phone */}
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Телефон{' '}
-          <span className="text-gray-400 font-normal">(необязательно)</span>
+        <label style={{ ...labelStyle }}>
+          Телефон <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(необязательно)</span>
         </label>
         <input
-          id="phone"
-          type="tel"
-          autoComplete="tel"
-          {...register('phone', {
-            pattern: {
-              value: /^[\d\s\-\+\(\)]+$/,
-              message: 'Некорректный номер телефона',
-            },
-          })}
-          className={inputClass(errors.phone)}
-          placeholder="+7 (XXX) XXX-XX-XX"
+          type="tel" autoComplete="tel" placeholder="+7 (XXX) XXX-XX-XX"
+          {...register('phone', { pattern: { value: /^[\d\s\-\+\(\)]+$/, message: 'Некорректный номер' } })}
+          style={inputStyle(errors.phone)}
+          onFocus={e => { if (!errors.phone) e.target.style.borderColor = 'var(--accent)'; }}
+          onBlur={e => { if (!errors.phone) e.target.style.borderColor = 'var(--border)'; }}
         />
-        {errors.phone && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">⚠ {errors.phone.message}</p>
-        )}
+        <ErrorMsg error={errors.phone} />
       </div>
 
-      {/* Пароль */}
+      {/* Password */}
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Пароль
-        </label>
-        <div className="relative">
+        <label style={labelStyle}>Пароль</label>
+        <div style={{ position: 'relative' }}>
           <input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            autoComplete="new-password"
-            {...register('password', {
-              required: 'Пароль обязателен',
-              minLength: { value: 6, message: 'Минимум 6 символов' },
-            })}
-            className={`${inputClass(errors.password)} pr-11`}
-            placeholder="••••••••"
+            type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="••••••••"
+            {...register('password', { required: 'Пароль обязателен', minLength: { value: 6, message: 'Минимум 6 символов' } })}
+            style={{ ...inputStyle(errors.password), paddingRight: 42 }}
+            onFocus={e => { if (!errors.password) e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { if (!errors.password) e.target.style.borderColor = 'var(--border)'; }}
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-            tabIndex={-1}
-            aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-          >
-            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          <button type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}
+            style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', padding: 2 }}>
+            {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         </div>
-        {errors.password && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">⚠ {errors.password.message}</p>
-        )}
+        <ErrorMsg error={errors.password} />
         <PasswordStrength password={password} />
       </div>
 
-      {/* Подтверждение пароля */}
+      {/* Confirm password */}
       <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Подтвердите пароль
-        </label>
-        <div className="relative">
+        <label style={labelStyle}>Подтвердите пароль</label>
+        <div style={{ position: 'relative' }}>
           <input
-            id="confirmPassword"
-            type={showConfirm ? 'text' : 'password'}
-            autoComplete="new-password"
+            type={showConfirm ? 'text' : 'password'} autoComplete="new-password" placeholder="••••••••"
             {...register('confirmPassword', {
-              required: 'Подтверждение пароля обязательно',
-              validate: (value) => value === password || 'Пароли не совпадают',
+              required: 'Подтверждение обязательно',
+              validate: v => v === password || 'Пароли не совпадают',
             })}
-            className={`${inputClass(errors.confirmPassword)} pr-11`}
-            placeholder="••••••••"
+            style={{ ...inputStyle(errors.confirmPassword), paddingRight: 42 }}
+            onFocus={e => { if (!errors.confirmPassword) e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { if (!errors.confirmPassword) e.target.style.borderColor = 'var(--border)'; }}
           />
-          <button
-            type="button"
-            onClick={() => setShowConfirm(!showConfirm)}
-            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-            tabIndex={-1}
-            aria-label={showConfirm ? 'Скрыть пароль' : 'Показать пароль'}
-          >
-            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          <button type="button" onClick={() => setShowConfirm(!showConfirm)} tabIndex={-1}
+            style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', padding: 2 }}>
+            {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         </div>
-        {errors.confirmPassword && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">⚠ {errors.confirmPassword.message}</p>
-        )}
+        <ErrorMsg error={errors.confirmPassword} />
         {!errors.confirmPassword && watch('confirmPassword') && watch('confirmPassword') === password && (
-          <p className="mt-1.5 text-sm text-green-600 dark:text-green-400">✓ Пароли совпадают</p>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#22c55e', marginTop: 6, letterSpacing: '0.05em' }}>✓ Пароли совпадают</p>
         )}
       </div>
 
-      {/* Кнопка */}
+      {/* Submit */}
       <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+        type="submit" disabled={isSubmitting}
+        style={{
+          marginTop: 4, width: '100%', padding: '13px 0',
+          background: isSubmitting ? 'rgba(249,115,22,0.5)' : 'var(--accent)',
+          color: '#fff', fontWeight: 700, fontSize: 15,
+          borderRadius: 10, border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          boxShadow: '0 4px 20px var(--accent-glow)',
+          transition: 'background 0.2s',
+          fontFamily: 'DM Sans, sans-serif',
+        }}
+        onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.background = '#ea580c'; }}
+        onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.background = 'var(--accent)'; }}
       >
         {isSubmitting ? (
           <>
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rotateSlow 0.8s linear infinite', display: 'block' }} />
             Регистрация...
           </>
-        ) : (
-          'Зарегистрироваться'
-        )}
+        ) : 'Зарегистрироваться'}
       </button>
-
-      {/* Ссылка на вход */}
-      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-        Уже есть аккаунт?{' '}
-        <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium transition-colors">
-          Войти
-        </Link>
-      </p>
     </form>
   );
 }
