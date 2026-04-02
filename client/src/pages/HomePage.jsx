@@ -1,92 +1,107 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Upload, Calculator, Package, Star, ArrowRight, Printer, Zap, Shield, HeartHandshake } from 'lucide-react';
+import { Upload, Calculator, Package, ArrowRight, ArrowUpRight, Zap, Shield, Cpu, Headphones } from 'lucide-react';
 import { getPosts } from '../api/posts.api';
 import PostCard from '../components/posts/PostCard';
 
-/* ─── Typewriter hook ────────────────────────────── */
-function useTypewriter(text, speed = 45, delay = 0) {
-  const [displayed, setDisplayed] = useState('');
-  const [done, setDone] = useState(false);
-  useEffect(() => {
-    setDisplayed('');
-    setDone(false);
-    let i = 0;
-    const t = setTimeout(() => {
-      const iv = setInterval(() => {
-        setDisplayed(text.slice(0, ++i));
-        if (i >= text.length) { clearInterval(iv); setDone(true); }
-      }, speed);
-      return () => clearInterval(iv);
-    }, delay);
-    return () => clearTimeout(t);
-  }, [text, speed, delay]);
-  return { displayed, done };
-}
+const STATS = [
+  { value: 500,  suffix: '+', label: 'Выполненных заказов', sub: 'с 2019 года' },
+  { value: 5,    suffix: '',  label: 'Лет на рынке',        sub: 'г. Москва' },
+  { value: 12,   suffix: '',  label: 'Принтеров',            sub: 'FDM + SLA' },
+  { value: 98,   suffix: '%', label: 'Довольных клиентов',  sub: 'по опросам' },
+];
 
-/* ─── IntersectionObserver hook ─────────────────── */
+const HOW_IT_WORKS = [
+  { step: '01', icon: Upload,     title: 'Загрузите модель',      desc: 'STL, OBJ или 3MF — напрямую на сайте, без лишних шагов' },
+  { step: '02', icon: Calculator, title: 'Рассчитайте стоимость', desc: 'Выберите материал, качество и заполнение — цена мгновенно' },
+  { step: '03', icon: Package,    title: 'Получите заказ',        desc: 'Оформите онлайн и следите за статусом в личном кабинете' },
+];
+
+const MATERIALS = [
+  { name: 'PLA',   desc: 'Лёгкий в печати',       temp: '200°C', color: '#4ADE80', glow: 'rgba(74,222,128,0.25)' },
+  { name: 'ABS',   desc: 'Прочный, термостойкий',  temp: '240°C', color: '#FB923C', glow: 'rgba(251,146,60,0.25)' },
+  { name: 'PETG',  desc: 'Универсальный',           temp: '230°C', color: '#38BDF8', glow: 'rgba(56,189,248,0.25)' },
+  { name: 'TPU',   desc: 'Гибкий',                  temp: '220°C', color: '#C084FC', glow: 'rgba(192,132,252,0.25)' },
+  { name: 'Nylon', desc: 'Максимальная прочность',  temp: '260°C', color: '#F5F0E8', glow: 'rgba(245,240,232,0.2)' },
+];
+
+const FEATURES = [
+  { icon: Zap,        title: 'Быстро',         desc: 'Стандартные заказы за 24–48 ч', color: '#FACC15' },
+  { icon: Shield,     title: 'Надёжно',        desc: 'Контроль качества на каждом этапе', color: '#4F8EF7' },
+  { icon: Cpu,        title: '12 принтеров',   desc: 'FDM и SLA, широкий выбор материалов', color: '#C084FC' },
+  { icon: Headphones, title: 'Поддержка 24/7', desc: 'Консультируем на каждом этапе', color: '#4ADE80' },
+];
+
+const REVIEWS = [
+  { name: 'Дмитрий К.', role: 'Прототипирование', text: 'Заказал корпус — всё точь-в-точь по размерам. Качество на уровне промышленной печати.', rating: 5 },
+  { name: 'Анна М.',    role: 'Дизайн-проект',     text: 'Быстро, качественно. Калькулятор показывает всё прозрачно до копейки. Очень удобно.', rating: 5 },
+  { name: 'Сергей П.',  role: 'Запчасти',          text: 'Напечатали деталь, которую нигде нельзя купить. Подошла идеально с первого раза.', rating: 5 },
+];
+
+/* ── Intersection observer hook ── */
 function useInView(options = {}) {
   const ref = useRef(null);
-  const [inView, setInView] = useState(false);
+  const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setInView(true); obs.disconnect(); }
-    }, { threshold: 0.15, ...options });
-    obs.observe(el);
-    return () => obs.disconnect();
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setVisible(true); io.unobserve(el); }
+    }, { threshold: 0.1, ...options });
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
-  return [ref, inView];
+  return [ref, visible];
 }
 
-/* ─── Animated counter ───────────────────────────── */
-function Counter({ target, suffix = '', duration = 1800 }) {
+/* ── Animated counter ── */
+function Counter({ target, suffix, active }) {
   const [count, setCount] = useState(0);
-  const [ref, inView] = useInView();
   useEffect(() => {
-    if (!inView) return;
-    const num = parseFloat(target);
-    if (!num) return;
-    const start = performance.now();
+    if (!active) return;
+    let start = 0;
+    const duration = 1800;
+    const startTime = performance.now();
     const tick = (now) => {
-      const progress = Math.min((now - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.round(num * ease));
-      if (progress < 1) requestAnimationFrame(tick);
+      const p = Math.min((now - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 4);
+      setCount(Math.floor(ease * target));
+      if (p < 1) requestAnimationFrame(tick);
+      else setCount(target);
     };
     requestAnimationFrame(tick);
-  }, [inView, target, duration]);
-  return <span ref={ref}>{count}{suffix}</span>;
+  }, [active, target]);
+  return <>{count}{suffix}</>;
 }
 
-/* ─── Particles ─────────────────────────────────── */
-const PARTICLE_COLORS = ['rgba(249,115,22,0.55)', 'rgba(59,130,246,0.45)', 'rgba(139,92,246,0.40)'];
-function Particles({ count = 24 }) {
+/* ── Floating particles ── */
+function Particles() {
   const particles = useRef(
-    Array.from({ length: count }, (_, i) => ({
+    Array.from({ length: 24 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: 2 + Math.random() * 4,
-      color: PARTICLE_COLORS[i % PARTICLE_COLORS.length],
-      duration: 5 + Math.random() * 8,
-      delay: Math.random() * 6,
+      size: Math.random() * 3 + 1,
+      delay: Math.random() * 8,
+      duration: Math.random() * 6 + 6,
+      color: i % 4 === 0 ? 'rgba(255,77,0,0.6)' : i % 4 === 1 ? 'rgba(79,142,247,0.4)' : i % 4 === 2 ? 'rgba(192,132,252,0.3)' : 'rgba(255,255,255,0.15)',
     }))
   ).current;
 
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {particles.map(p => (
         <div
           key={p.id}
+          className="absolute rounded-full"
           style={{
-            position: 'absolute',
-            left: `${p.x}%`, top: `${p.y}%`,
-            width: p.size, height: p.size,
-            borderRadius: '50%',
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
             background: p.color,
-            animation: `float ${p.duration}s ${p.delay}s ease-in-out infinite`,
+            animation: `particle ${p.duration}s ${p.delay}s ease-in-out infinite`,
+            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
           }}
         />
       ))}
@@ -94,148 +109,52 @@ function Particles({ count = 24 }) {
   );
 }
 
-/* ─── Scan line ─────────────────────────────────── */
+/* ── Scan line ── */
 function ScanLine() {
   return (
-    <div style={{
-      position: 'absolute', left: 0, right: 0, height: 2,
-      background: 'linear-gradient(90deg, transparent 0%, rgba(249,115,22,0.6) 30%, rgba(249,115,22,0.8) 50%, rgba(249,115,22,0.6) 70%, transparent 100%)',
-      animation: 'scan 5s linear infinite',
-      pointerEvents: 'none', zIndex: 3,
-    }} />
+    <div
+      className="absolute left-0 right-0 pointer-events-none z-10"
+      style={{
+        height: '1px',
+        background: 'linear-gradient(90deg, transparent, rgba(255,77,0,0.3), rgba(255,77,0,0.6), rgba(255,77,0,0.3), transparent)',
+        animation: 'scan 8s 2s linear infinite',
+        top: 0,
+      }}
+    />
   );
 }
 
-/* ─── Rotating SVG geometry ─────────────────────── */
+/* ── Decorative 3D geometry ── */
 function GeoDecor() {
   return (
-    <div style={{
-      position: 'absolute', right: '6%', top: '50%', transform: 'translateY(-50%)',
-      pointerEvents: 'none', zIndex: 2, opacity: 0.35,
-    }}>
-      <svg width="260" height="260" viewBox="0 0 260 260" fill="none" style={{ animation: 'rotateSlow 25s linear infinite' }}>
-        <polygon points="130,20 240,200 20,200" stroke="rgba(249,115,22,0.7)" strokeWidth="1.5" fill="none"/>
-        <polygon points="130,50 210,180 50,180" stroke="rgba(59,130,246,0.5)" strokeWidth="1" fill="none"/>
-        <rect x="90" y="90" width="80" height="80" transform="rotate(45 130 130)" stroke="rgba(139,92,246,0.5)" strokeWidth="1" fill="none"/>
-        <circle cx="130" cy="130" r="50" stroke="rgba(249,115,22,0.25)" strokeWidth="0.5" fill="none" strokeDasharray="4 6"/>
-        <circle cx="130" cy="130" r="80" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" fill="none" strokeDasharray="2 8"/>
+    <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none hidden xl:block" style={{ opacity: 0.12 }}>
+      <svg width="320" height="320" viewBox="0 0 320 320" fill="none">
+        <g style={{ animation: 'rotate-slow 30s linear infinite', transformOrigin: '160px 160px' }}>
+          <polygon points="160,20 300,240 20,240" stroke="rgba(255,77,0,0.8)" strokeWidth="1" fill="none" />
+          <polygon points="160,60 270,220 50,220" stroke="rgba(79,142,247,0.5)" strokeWidth="1" fill="none" />
+          <polygon points="160,100 240,200 80,200" stroke="rgba(255,255,255,0.3)" strokeWidth="1" fill="none" />
+        </g>
+        <g style={{ animation: 'rotate-slow 20s linear infinite reverse', transformOrigin: '160px 160px' }}>
+          <rect x="80" y="80" width="160" height="160" stroke="rgba(192,132,252,0.3)" strokeWidth="1" fill="none"
+            transform="rotate(45 160 160)" />
+          <rect x="100" y="100" width="120" height="120" stroke="rgba(255,77,0,0.2)" strokeWidth="1" fill="none"
+            transform="rotate(45 160 160)" />
+        </g>
+        <circle cx="160" cy="160" r="120" stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none" strokeDasharray="4 8" />
+        <circle cx="160" cy="160" r="80" stroke="rgba(255,77,0,0.15)" strokeWidth="1" fill="none" strokeDasharray="2 6" />
       </svg>
     </div>
   );
 }
 
-/* ─── Corner markers ────────────────────────────── */
-function CornerMarkers() {
-  const corners = [
-    { top: 16, left: 16 },
-    { top: 16, right: 16 },
-    { bottom: 16, left: 16 },
-    { bottom: 16, right: 16 },
-  ];
-  return (
-    <>
-      {corners.map((style, i) => (
-        <div key={i} style={{ position: 'absolute', ...style, width: 16, height: 16, pointerEvents: 'none', zIndex: 4 }}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d={
-              i === 0 ? 'M0 8V0H8' :
-              i === 1 ? 'M16 8V0H8' :
-              i === 2 ? 'M0 8V16H8' : 'M16 8V16H8'
-            } stroke="rgba(249,115,22,0.5)" strokeWidth="1.5"/>
-          </svg>
-        </div>
-      ))}
-    </>
-  );
-}
-
-/* ─── Magnetic button ────────────────────────────── */
-function MagneticBtn({ children, to, className: cls, style: sx }) {
-  const ref = useRef(null);
-  const onMouseMove = useCallback((e) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = (e.clientX - cx) * 0.22;
-    const dy = (e.clientY - cy) * 0.22;
-    el.style.transform = `translate(${dx}px, ${dy}px)`;
-  }, []);
-  const onMouseLeave = useCallback(() => {
-    if (ref.current) ref.current.style.transform = 'translate(0,0)';
-  }, []);
-  return (
-    <Link
-      to={to}
-      ref={ref}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      className={cls}
-      style={{ ...sx, transition: 'transform 0.3s cubic-bezier(.22,1,.36,1)', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-    >
-      {children}
-    </Link>
-  );
-}
-
-/* ─── Section header ─────────────────────────────── */
-function SectionHeader({ label, title, sub }) {
-  const [ref, inView] = useInView();
-  return (
-    <div ref={ref} style={{ textAlign: 'center', marginBottom: 56, opacity: inView ? 1 : 0, transform: inView ? 'none' : 'translateY(24px)', transition: 'opacity 0.6s ease, transform 0.6s cubic-bezier(.22,1,.36,1)' }}>
-      <div className="section-label" style={{ marginBottom: 12 }}>{label}</div>
-      <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(2rem,5vw,3.5rem)', letterSpacing: '0.06em', color: 'var(--text-1)', lineHeight: 1 }}>{title}</h2>
-      {sub && <p style={{ marginTop: 12, fontSize: 15, color: 'var(--text-2)', maxWidth: 480, margin: '12px auto 0' }}>{sub}</p>}
-    </div>
-  );
-}
-
-/* ─── Data ───────────────────────────────────────── */
-const STATS = [
-  { value: 500, suffix: '+', label: 'Выполненных заказов' },
-  { value: 5,   suffix: '',  label: 'Лет опыта' },
-  { value: 12,  suffix: '',  label: 'Принтеров' },
-  { value: 98,  suffix: '%', label: 'Довольных клиентов' },
-];
-
-const HOW_IT_WORKS = [
-  { step: '01', icon: Upload,     title: 'Загрузите модель',      desc: 'STL, OBJ или 3MF — прямо на сайте без лишних шагов' },
-  { step: '02', icon: Calculator, title: 'Рассчитайте стоимость', desc: 'Выберите материал и качество — цена считается мгновенно' },
-  { step: '03', icon: Package,    title: 'Получите заказ',        desc: 'Оформите онлайн и отслеживайте статус в личном кабинете' },
-];
-
-const MATERIALS = [
-  { name: 'PLA',   desc: 'Лёгкий в печати',       glow: 'rgba(52,211,153,0.35)', dot: '#34d399' },
-  { name: 'ABS',   desc: 'Прочный, термостойкий',  glow: 'rgba(249,115,22,0.35)', dot: '#f97316' },
-  { name: 'PETG',  desc: 'Универсальный',           glow: 'rgba(59,130,246,0.35)', dot: '#3b82f6' },
-  { name: 'TPU',   desc: 'Гибкий',                 glow: 'rgba(139,92,246,0.35)', dot: '#8b5cf6' },
-  { name: 'Nylon', desc: 'Макс. прочность',         glow: 'rgba(156,163,175,0.25)', dot: '#9ca3af' },
-];
-
-const REVIEWS = [
-  { name: 'Дмитрий К.', rating: 5, text: 'Отличное качество! Заказал прототип корпуса — всё точь-в-точь. Буду обращаться ещё.', init: 'Д' },
-  { name: 'Анна М.',    rating: 5, text: 'Быстро, качественно, удобный сайт. Особенно понравился калькулятор — всё прозрачно.', init: 'А' },
-  { name: 'Сергей П.',  rating: 5, text: 'Напечатали запчасть для старого принтера, которую нигде не купить. Профессионалы!', init: 'С' },
-];
-
-const FEATURES = [
-  { icon: Zap,            title: 'Быстро',       desc: 'Стандартные заказы 24–48 ч',           color: '#f59e0b' },
-  { icon: Shield,         title: 'Надёжно',      desc: 'Контроль качества каждого изделия',    color: '#3b82f6' },
-  { icon: Printer,        title: '12 принтеров', desc: 'Широкий выбор материалов и технологий', color: '#8b5cf6' },
-  { icon: HeartHandshake, title: 'Поддержка',    desc: 'Консультируем на каждом этапе',         color: '#34d399' },
-];
-
-/* ─── HomePage ───────────────────────────────────── */
 export default function HomePage() {
   const [latestPosts, setLatestPosts] = useState([]);
-  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
-  const heroRef = useRef(null);
+  const [heroVisible, setHeroVisible] = useState(false);
 
-  const { displayed: typeText } = useTypewriter(
-    'Загрузите модель — получите готовое изделие. Быстро, точно, по честной цене.',
-    28, 900
-  );
+  useEffect(() => {
+    const t = setTimeout(() => setHeroVisible(true), 80);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     getPosts({ limit: 3, page: 1 })
@@ -243,379 +162,467 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // Parallax on hero
-  useEffect(() => {
-    const hero = heroRef.current;
-    if (!hero) return;
-    const onMove = (e) => {
-      const rect = hero.getBoundingClientRect();
-      setMousePos({
-        x: (e.clientX - rect.left) / rect.width,
-        y: (e.clientY - rect.top) / rect.height,
-      });
-    };
-    hero.addEventListener('mousemove', onMove);
-    return () => hero.removeEventListener('mousemove', onMove);
-  }, []);
-
-  const parallaxX = (mousePos.x - 0.5) * 30;
-  const parallaxY = (mousePos.y - 0.5) * 20;
-
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ background: 'var(--bg)' }}>
 
-      {/* ── HERO ─────────────────────────────────────── */}
-      <section
-        ref={heroRef}
-        className="mesh-bg grid-overlay"
-        style={{ position: 'relative', overflow: 'hidden', minHeight: '92vh', display: 'flex', alignItems: 'center' }}
-      >
-        <Particles count={24} />
+      {/* ══════════ HERO ══════════ */}
+      <section className="relative min-h-[95vh] flex flex-col justify-center overflow-hidden mesh-bg grid-overlay">
+        <Particles />
         <ScanLine />
-        <CornerMarkers />
         <GeoDecor />
 
         {/* Ambient glows */}
-        <div style={{
-          position: 'absolute', top: '20%', left: '15%', width: 500, height: 500,
-          background: 'radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 60%)',
-          transform: `translate(${parallaxX * 0.4}px, ${parallaxY * 0.4}px)`,
-          transition: 'transform 0.6s ease', pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '10%', right: '20%', width: 400, height: 400,
-          background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 60%)',
-          transform: `translate(${-parallaxX * 0.3}px, ${-parallaxY * 0.3}px)`,
-          transition: 'transform 0.6s ease', pointerEvents: 'none',
-        }} />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full animate-pulse-glow"
+            style={{ background: 'radial-gradient(circle, rgba(255,77,0,0.08) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(79,142,247,0.06) 0%, transparent 70%)', filter: 'blur(40px)', animation: 'pulse-glow 5s 2s ease-in-out infinite' }} />
+        </div>
 
-        <div style={{ position: 'relative', zIndex: 5, maxWidth: 1280, margin: '0 auto', padding: '100px 24px 80px', width: '100%' }}>
+        {/* Corner marks */}
+        <div className="absolute top-6 left-6 w-10 h-10 border-l-2 border-t-2 border-[var(--accent)] opacity-50 animate-fade-in delay-700" />
+        <div className="absolute top-6 right-6 w-10 h-10 border-r-2 border-t-2 opacity-30 animate-fade-in delay-800" style={{ borderColor: 'var(--border-strong)' }} />
+        <div className="absolute bottom-6 left-6 w-10 h-10 border-l-2 border-b-2 opacity-20 animate-fade-in delay-800" style={{ borderColor: 'var(--border-strong)' }} />
+        <div className="absolute bottom-6 right-6 w-10 h-10 border-r-2 border-b-2 border-[var(--accent)] opacity-30 animate-fade-in delay-700" />
 
-          {/* Status badge */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '6px 14px',
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--border-2)',
-            borderRadius: 100,
-            backdropFilter: 'blur(16px)',
-            marginBottom: 36,
-            animation: 'fadeUp 0.6s 0.1s both',
-          }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', display: 'block', animation: 'pulseDot 2s ease-in-out infinite' }} />
-            <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: 'var(--text-2)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-              Работаем в Москве · Быстрая доставка
+        {/* Status badge */}
+        <div className={`absolute top-8 left-1/2 -translate-x-1/2 transition-all duration-700 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
+          style={{ transitionDelay: '0.1s' }}>
+          <div className="glass flex items-center gap-3 px-5 py-2.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse-dot" />
+            <span className="font-mono text-[11px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+              Профессиональная 3D-печать · Москва
             </span>
+            <span className="font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>2019–{new Date().getFullYear()}</span>
           </div>
+        </div>
 
-          {/* Big title — 3 lines */}
-          <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', lineHeight: 0.9, marginBottom: 28 }}>
-            <div style={{ fontSize: 'clamp(72px,12vw,160px)', color: 'var(--text-1)', letterSpacing: '0.04em', animation: 'fadeUp 0.65s 0.25s both' }}>
-              3D PRINT
-            </div>
-            <div style={{ fontSize: 'clamp(72px,12vw,160px)', letterSpacing: '0.04em', animation: 'fadeUp 0.65s 0.4s both' }}
-              className="shimmer-text">
-              ЛЮБОЙ
-            </div>
-            <div style={{ fontSize: 'clamp(72px,12vw,160px)', letterSpacing: '0.04em', animation: 'fadeUp 0.65s 0.55s both' }}
-              className="text-outline">
-              СЛОЖНОСТИ
-            </div>
-          </h1>
+        {/* Main copy */}
+        <div className="container mx-auto px-6 pt-24 pb-16 relative z-10">
+          <div className="max-w-4xl">
 
-          {/* Typewriter */}
-          <p style={{
-            fontSize: 'clamp(14px,1.6vw,18px)',
-            color: 'var(--text-2)',
-            maxWidth: 540,
-            lineHeight: 1.7,
-            marginBottom: 40,
-            minHeight: '3.4em',
-            animation: 'fadeIn 0.5s 0.7s both',
-          }}>
-            {typeText}
-            <span style={{ borderRight: '2px solid var(--accent)', marginLeft: 2, animation: 'pulseDot 0.8s ease-in-out infinite' }}>&nbsp;</span>
-          </p>
+            {/* Eyebrow */}
+            <div className={`flex items-center gap-4 mb-8 transition-all duration-800 ${heroVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
+              style={{ transitionDelay: '0.2s', transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s' }}>
+              <span className="h-px w-16" style={{ background: 'linear-gradient(90deg, var(--accent), transparent)' }} />
+              <span className="font-mono text-xs tracking-widest2 uppercase" style={{ color: 'var(--accent)' }}>3D Print Lab</span>
+            </div>
 
-          {/* CTA buttons */}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', animation: 'fadeUp 0.65s 0.9s both' }}>
-            <MagneticBtn to="/upload" style={{
-              padding: '14px 28px', background: 'var(--accent)',
-              color: '#fff', fontWeight: 600, fontSize: 15,
-              borderRadius: 12,
-              boxShadow: '0 4px 24px var(--accent-glow)',
-            }}>
-              <Upload size={17} /> Загрузить модель
-            </MagneticBtn>
-            <MagneticBtn to="/calculator" style={{
-              padding: '14px 28px',
-              background: 'var(--glass-bg)',
-              border: '1px solid var(--border-2)',
-              backdropFilter: 'blur(12px)',
-              color: 'var(--text-1)', fontWeight: 600, fontSize: 15,
-              borderRadius: 12,
-            }}>
-              <Calculator size={17} /> Рассчитать цену
-            </MagneticBtn>
+            {/* Headline */}
+            <h1
+              className={`font-display leading-[0.88] tracking-wider mb-10 transition-all ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+              style={{ fontSize: 'clamp(64px, 13vw, 160px)', transitionDuration: '1s', transitionDelay: '0.3s', transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
+            >
+              <span style={{ color: 'var(--text-primary)', display: 'block' }}>ТОЧНОСТЬ</span>
+              <span className="shimmer-text" style={{ display: 'block' }}>В КАЖДОМ</span>
+              <span style={{
+                display: 'block',
+                WebkitTextStroke: '1.5px rgba(255,255,255,0.4)',
+                WebkitTextFillColor: 'transparent',
+              }}>ИЗДЕЛИИ</span>
+            </h1>
+
+            {/* Sub + CTA */}
+            <div className={`flex flex-col lg:flex-row items-start lg:items-end gap-8 transition-all ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+              style={{ transitionDuration: '0.9s', transitionDelay: '0.5s', transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}>
+
+              <p className="text-lg leading-relaxed max-w-sm font-light" style={{ color: 'var(--text-secondary)' }}>
+                Загрузите STL-файл — получите готовое изделие.<br />
+                Быстро, точно, по честной цене.
+              </p>
+
+              <div className="flex items-center gap-4 lg:ml-auto">
+                <Link to="/upload"
+                  className="btn-primary group flex items-center gap-3 px-8 py-4 font-sans font-semibold"
+                  style={{ background: 'var(--accent)', color: 'var(--bg)' }}>
+                  <Upload className="w-4 h-4" />
+                  Загрузить модель
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+                <Link to="/calculator"
+                  className="btn-ghost group flex items-center gap-2 px-6 py-4 font-sans font-medium border"
+                  style={{ borderColor: 'var(--border-strong)', color: 'var(--text-secondary)' }}>
+                  <Calculator className="w-4 h-4" />
+                  Цены
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Scroll indicator */}
-          <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, opacity: 0.4, animation: 'fadeIn 1s 1.5s both' }}>
-            <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-3)' }}>Scroll</span>
-            <div style={{ width: 1, height: 40, background: 'linear-gradient(to bottom, var(--accent), transparent)', animation: 'float 2s ease-in-out infinite' }} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── STATS ────────────────────────────────────── */}
-      <section style={{ background: 'var(--bg-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 24px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
-          {STATS.map((s, i) => {
-            const [ref, inView] = useInView();
-            return (
-              <div key={s.label} ref={ref} style={{
-                textAlign: 'center',
-                opacity: inView ? 1 : 0,
-                transform: inView ? 'none' : 'translateY(20px)',
-                transition: `opacity 0.5s ${i * 0.1}s ease, transform 0.5s ${i * 0.1}s cubic-bezier(.22,1,.36,1)`,
-              }}>
-                <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 52, letterSpacing: '0.04em', color: 'var(--accent)', lineHeight: 1 }}>
-                  {inView ? <Counter target={s.value} suffix={s.suffix} /> : `0${s.suffix}`}
-                </p>
-                <p style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 6 }}>{s.label}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ─────────────────────────────── */}
-      <section style={{ padding: '96px 24px', maxWidth: 1280, margin: '0 auto' }}>
-        <SectionHeader label="/ процесс" title="КАК ЭТО РАБОТАЕТ" sub="Три простых шага от идеи до готового изделия" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20 }}>
-          {HOW_IT_WORKS.map(({ step, icon: Icon, title, desc }, i) => {
-            const [ref, inView] = useInView();
-            return (
-              <div
-                key={step} ref={ref}
-                className="glass glass-hover grad-border card-line"
-                style={{
-                  borderRadius: 20, padding: 32, position: 'relative', overflow: 'hidden',
-                  opacity: inView ? 1 : 0,
-                  transform: inView ? 'none' : 'translateY(28px)',
-                  transition: `opacity 0.6s ${i * 0.12}s ease, transform 0.6s ${i * 0.12}s cubic-bezier(.22,1,.36,1)`,
-                }}
-              >
-                {/* Step number watermark */}
-                <span style={{
-                  position: 'absolute', top: 16, right: 20,
-                  fontFamily: 'Bebas Neue, sans-serif', fontSize: 72, lineHeight: 1,
-                  color: 'rgba(249,115,22,0.06)', letterSpacing: '0.05em',
-                  pointerEvents: 'none', userSelect: 'none',
-                }}>
-                  {step}
-                </span>
-                <div style={{
-                  width: 52, height: 52,
-                  background: 'linear-gradient(135deg, var(--accent), #fb923c)',
-                  borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: 20, boxShadow: '0 4px 20px var(--accent-glow)',
-                }}>
-                  <Icon size={24} color="#fff" />
-                </div>
-                <h3 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 26, letterSpacing: '0.06em', color: 'var(--text-1)', marginBottom: 10 }}>{title}</h3>
-                <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.7 }}>{desc}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── FEATURES ─────────────────────────────────── */}
-      <section style={{ background: 'var(--bg-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <SectionHeader label="/ преимущества" title="ПОЧЕМУ МЫ" />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
-            {FEATURES.map(({ icon: Icon, title, desc, color }, i) => {
-              const [ref, inView] = useInView();
-              return (
-                <div
-                  key={title} ref={ref}
-                  className="glass glass-hover card-line"
-                  style={{
-                    borderRadius: 16, padding: '28px 24px', textAlign: 'center',
-                    opacity: inView ? 1 : 0,
-                    transform: inView ? 'none' : 'translateY(24px)',
-                    transition: `opacity 0.5s ${i * 0.1}s ease, transform 0.5s ${i * 0.1}s cubic-bezier(.22,1,.36,1)`,
-                  }}
-                >
-                  <div style={{
-                    width: 52, height: 52, borderRadius: 14,
-                    background: `${color}18`,
-                    border: `1px solid ${color}30`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto 16px',
-                  }}>
-                    <Icon size={22} color={color} />
-                  </div>
-                  <h3 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 22, letterSpacing: '0.06em', color: 'var(--text-1)', marginBottom: 8 }}>{title}</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>{desc}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── MATERIALS ────────────────────────────────── */}
-      <section style={{ padding: '96px 24px', maxWidth: 1280, margin: '0 auto' }}>
-        <SectionHeader label="/ материалы" title="ДОСТУПНЫЕ МАТЕРИАЛЫ" sub="От простого PLA до прочного нейлона" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 32 }}>
-          {MATERIALS.map((m, i) => {
-            const [ref, inView] = useInView();
-            return (
-              <Link
-                key={m.name} to="/materials" ref={ref}
-                style={{
-                  position: 'relative', textDecoration: 'none',
-                  borderRadius: 16, padding: '28px 20px',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  overflow: 'hidden',
-                  opacity: inView ? 1 : 0,
-                  transform: inView ? 'none' : 'translateY(24px)',
-                  transition: `opacity 0.5s ${i * 0.08}s ease, transform 0.5s ${i * 0.08}s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease, border-color 0.35s ease`,
-                  display: 'block',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.boxShadow = `0 0 40px ${m.glow}`;
-                  e.currentTarget.style.borderColor = m.dot + '60';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.borderColor = 'var(--border)';
-                }}
-              >
-                <div style={{
-                  width: 10, height: 10, borderRadius: '50%',
-                  background: m.dot, marginBottom: 16,
-                  boxShadow: `0 0 12px ${m.glow}`,
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                }} />
-                <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 32, letterSpacing: '0.06em', color: 'var(--text-1)', lineHeight: 1, marginBottom: 6 }}>{m.name}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-2)' }}>{m.desc}</p>
-              </Link>
-            );
-          })}
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <Link to="/materials" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            Сравнить все материалы <ArrowRight size={14} />
-          </Link>
-        </div>
-      </section>
-
-      {/* ── LATEST POSTS ─────────────────────────────── */}
-      {latestPosts.length > 0 && (
-        <section style={{ background: 'var(--bg-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '80px 24px' }}>
-          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 48, flexWrap: 'wrap', gap: 16 }}>
-              <div>
-                <div className="section-label" style={{ marginBottom: 10 }}>/ галерея</div>
-                <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(2rem,5vw,3rem)', letterSpacing: '0.06em', color: 'var(--text-1)', lineHeight: 1 }}>ПОСЛЕДНИЕ РАБОТЫ</h2>
-              </div>
-              <Link to="/posts" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--accent)', textDecoration: 'none' }}>
-                Все работы <ArrowRight size={14} />
-              </Link>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 20 }}>
-              {latestPosts.map((post, i) => (
-                <div key={post.id} style={{ animation: `fadeUp 0.6s ${i * 0.1}s both` }}>
-                  <PostCard post={post} />
-                </div>
+          <div className={`absolute bottom-8 left-6 flex items-center gap-3 transition-all duration-1000 delay-700 ${heroVisible ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="flex flex-col gap-1.5">
+              {[0.3, 0.6, 1].map((o, i) => (
+                <div key={i} className="w-px h-4 rounded-full" style={{ background: `rgba(255,255,255,${o})`, animation: `pulse-dot ${1.5 + i * 0.3}s ${i * 0.2}s ease-in-out infinite` }} />
               ))}
             </div>
+            <span className="font-mono text-[10px] tracking-widest3 uppercase" style={{ color: 'var(--text-muted)', writingMode: 'vertical-rl' }}>scroll</span>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* ── REVIEWS ──────────────────────────────────── */}
-      <section style={{ padding: '96px 24px', maxWidth: 1280, margin: '0 auto' }}>
-        <SectionHeader label="/ отзывы" title="ЧТО ГОВОРЯТ КЛИЕНТЫ" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20 }}>
-          {REVIEWS.map((r, i) => {
-            const [ref, inView] = useInView();
-            return (
+      {/* ══════════ STATS ══════════ */}
+      <StatsSection />
+
+      {/* ══════════ HOW IT WORKS ══════════ */}
+      <HowSection />
+
+      {/* ══════════ FEATURES ══════════ */}
+      <FeaturesSection />
+
+      {/* ══════════ MATERIALS ══════════ */}
+      <MaterialsSection />
+
+      {/* ══════════ POSTS ══════════ */}
+      {latestPosts.length > 0 && <PostsSection posts={latestPosts} />}
+
+      {/* ══════════ REVIEWS ══════════ */}
+      <ReviewsSection />
+
+      {/* ══════════ CTA ══════════ */}
+      <CTASection />
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────── */
+
+function StatsSection() {
+  const [ref, visible] = useInView();
+  return (
+    <section ref={ref} style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+      <div className="container mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4">
+          {STATS.map((s, i) => (
+            <div
+              key={s.label}
+              className="px-8 py-10 text-center transition-all duration-700 relative group"
+              style={{
+                borderRight: i < 3 ? '1px solid var(--border)' : 'none',
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'translateY(0)' : 'translateY(20px)',
+                transitionDelay: `${i * 120}ms`,
+              }}
+            >
+              {/* Hover glow */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{ background: 'radial-gradient(ellipse at center, rgba(255,77,0,0.04) 0%, transparent 70%)' }} />
+              <p className="font-display text-5xl md:text-6xl mb-2 leading-none" style={{ color: 'var(--accent)' }}>
+                <Counter target={s.value} suffix={s.suffix} active={visible} />
+              </p>
+              <p className="font-sans text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>{s.label}</p>
+              <p className="font-mono text-xs tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>{s.sub}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HowSection() {
+  const [ref, visible] = useInView();
+  return (
+    <section ref={ref} className="py-28 container mx-auto px-6">
+      <SectionHeader label="Процесс" title="КАК ЭТО РАБОТАЕТ" visible={visible} />
+
+      <div className="grid md:grid-cols-3 gap-5 mt-14">
+        {HOW_IT_WORKS.map(({ step, icon: Icon, title, desc }, i) => (
+          <div
+            key={step}
+            className="glass glass-hover grad-border p-8 relative group transition-all duration-700"
+            style={{
+              transitionDelay: `${i * 120}ms`,
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(32px)',
+            }}
+          >
+            <div className="flex items-start justify-between mb-6">
+              <span className="font-mono text-xs tracking-widest2" style={{ color: 'var(--text-muted)' }}>{step}</span>
               <div
-                key={r.name} ref={ref}
-                className="glass glass-hover grad-border"
+                className="w-10 h-10 flex items-center justify-center transition-all duration-300 group-hover:scale-110"
                 style={{
-                  borderRadius: 20, padding: 28,
-                  opacity: inView ? 1 : 0,
-                  transform: inView ? 'none' : 'translateY(24px)',
-                  transition: `opacity 0.6s ${i * 0.12}s ease, transform 0.6s ${i * 0.12}s cubic-bezier(.22,1,.36,1)`,
+                  border: '1px solid var(--glass-border)',
+                  color: 'var(--text-muted)',
+                  background: 'var(--glass-bg)',
+                  backdropFilter: 'blur(12px)',
                 }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 16px var(--accent-glow)'; }}
               >
-                {/* Stars */}
-                <div style={{ display: 'flex', gap: 3, marginBottom: 14 }}>
-                  {Array.from({ length: r.rating }).map((_, j) => (
-                    <Star key={j} size={14} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
-                  ))}
-                </div>
-                <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.75, marginBottom: 20, fontStyle: 'italic' }}>"{r.text}"</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: 'linear-gradient(135deg,var(--accent),#fb923c)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'Bebas Neue, sans-serif', fontSize: 16, color: '#fff',
-                  }}>
-                    {r.init}
-                  </div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)' }}>{r.name}</span>
-                </div>
+                <Icon className="w-4 h-4" />
               </div>
-            );
-          })}
-        </div>
-      </section>
+            </div>
+            <h3 className="font-sans text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+            <p className="font-sans text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{desc}</p>
 
-      {/* ── CTA ──────────────────────────────────────── */}
-      <section className="mesh-bg" style={{ position: 'relative', overflow: 'hidden', padding: '80px 24px', borderTop: '1px solid var(--border)' }}>
-        <CornerMarkers />
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 500, height: 500, background: 'radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 60%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: 640, margin: '0 auto' }}>
-          <div className="section-label" style={{ marginBottom: 16 }}>/ начать сейчас</div>
-          <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(2.5rem,6vw,4rem)', letterSpacing: '0.06em', lineHeight: 1, marginBottom: 16 }}
-            className="shimmer-text">
-            ГОТОВЫ НАПЕЧАТАТЬ ЧТО-ТО КРУТОЕ?
-          </h2>
-          <p style={{ fontSize: 15, color: 'var(--text-2)', marginBottom: 36, lineHeight: 1.7 }}>
-            Загрузите STL-файл, получите цену за 10 секунд и оформите заказ онлайн
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <MagneticBtn to="/upload" style={{
-              padding: '14px 32px', background: 'var(--accent)', color: '#fff',
-              fontWeight: 700, fontSize: 15, borderRadius: 12,
-              boxShadow: '0 4px 28px var(--accent-glow)',
-            }}>
-              <Upload size={17} /> Загрузить модель
-            </MagneticBtn>
-            <MagneticBtn to="/contact" style={{
-              padding: '14px 28px',
-              background: 'transparent',
-              border: '1px solid var(--border-2)',
-              color: 'var(--text-1)', fontWeight: 600, fontSize: 15, borderRadius: 12,
-            }}>
-              Связаться с нами
-            </MagneticBtn>
+            {/* Animated accent line */}
+            <div className="mt-6 h-px w-0 group-hover:w-full transition-all duration-500 ease-out"
+              style={{ background: 'linear-gradient(90deg, var(--accent), transparent)' }} />
           </div>
-        </div>
-      </section>
+        ))}
+      </div>
 
+      <div className="mt-10 flex justify-end">
+        <Link to="/upload" className="flex items-center gap-2 font-mono text-xs tracking-widest uppercase transition-colors duration-200 group"
+          style={{ color: 'var(--text-secondary)' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          Попробовать сейчас
+          <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesSection() {
+  const [ref, visible] = useInView();
+  return (
+    <section ref={ref} style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
+      <div className="container mx-auto px-6 py-24">
+        <SectionHeader label="Преимущества" title="ПОЧЕМУ МЫ" visible={visible} />
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-14">
+          {FEATURES.map(({ icon: Icon, title, desc, color }, i) => (
+            <div
+              key={title}
+              className="glass glass-hover grad-border p-6 text-center group transition-all duration-700"
+              style={{
+                transitionDelay: `${i * 100}ms`,
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)',
+              }}
+            >
+              <div className="inline-flex items-center justify-center w-12 h-12 mb-4 transition-all duration-300 group-hover:scale-110"
+                style={{
+                  background: `${color}15`,
+                  border: `1px solid ${color}30`,
+                  borderRadius: '2px',
+                }}>
+                <Icon className="w-5 h-5" style={{ color }} />
+              </div>
+              <h3 className="font-sans font-semibold text-sm mb-2" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+              <p className="font-sans text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MaterialsSection() {
+  const [ref, visible] = useInView();
+  return (
+    <section ref={ref} className="py-28 container mx-auto px-6">
+      <SectionHeader label="Материалы" title="ДОСТУПНЫЕ МАТЕРИАЛЫ" visible={visible} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-14">
+        {MATERIALS.map((m, i) => (
+          <Link
+            key={m.name}
+            to="/materials"
+            className="glass glass-hover grad-border group p-8 flex flex-col justify-between min-h-[180px] transition-all duration-700"
+            style={{
+              transitionDelay: `${i * 90}ms`,
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(24px)',
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${m.glow}`}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--glass-shadow)'}
+          >
+            <div>
+              <div className="w-4 h-4 rounded-full mb-5 transition-all duration-300 group-hover:scale-150"
+                style={{ background: m.color, boxShadow: `0 0 20px ${m.glow}` }} />
+              <p className="font-display text-4xl tracking-wider mb-1" style={{ color: 'var(--text-primary)' }}>{m.name}</p>
+              <p className="font-sans text-xs" style={{ color: 'var(--text-secondary)' }}>{m.desc}</p>
+            </div>
+            <div className="flex items-center justify-between mt-5">
+              <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{m.temp}</span>
+              <ArrowUpRight className="w-3.5 h-3.5 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                style={{ color: 'var(--text-muted)' }} />
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-8 flex justify-end">
+        <Link to="/materials" className="flex items-center gap-2 font-mono text-xs tracking-widest uppercase transition-colors duration-200 group"
+          style={{ color: 'var(--text-secondary)' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          Сравнить все материалы
+          <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function PostsSection({ posts }) {
+  const [ref, visible] = useInView();
+  return (
+    <section ref={ref} style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
+      <div className="container mx-auto px-6 py-24">
+        <div className="flex items-center justify-between mb-14">
+          <SectionHeader label="Галерея" title="ПОСЛЕДНИЕ РАБОТЫ" visible={visible} inline />
+          <Link to="/posts" className="flex items-center gap-2 font-mono text-xs tracking-widest uppercase transition-colors duration-200 group shrink-0"
+            style={{ color: 'var(--text-secondary)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+            Все работы
+            <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+        </div>
+        <div className={`grid md:grid-cols-3 gap-5 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          {posts.map(post => <PostCard key={post.id} post={post} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ReviewsSection() {
+  const [ref, visible] = useInView();
+  return (
+    <section ref={ref} className="py-28 container mx-auto px-6">
+      <SectionHeader label="Клиенты" title="ЧТО ГОВОРЯТ" visible={visible} />
+
+      <div className="grid md:grid-cols-3 gap-5 mt-14">
+        {REVIEWS.map((r, i) => (
+          <div
+            key={r.name}
+            className="glass p-8 relative group transition-all duration-700"
+            style={{
+              transitionDelay: `${i * 120}ms`,
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(32px)',
+            }}
+          >
+            {/* Quote mark */}
+            <div className="absolute top-6 right-6 font-display text-7xl leading-none pointer-events-none select-none"
+              style={{ color: 'var(--accent)', opacity: 0.1 }}>"</div>
+
+            {/* Stars */}
+            <div className="flex gap-1 mb-5">
+              {Array.from({ length: r.rating }).map((_, j) => (
+                <div key={j} className="w-1.5 h-1.5 rounded-full transition-all duration-300 group-hover:scale-125"
+                  style={{ background: 'var(--accent)', transitionDelay: `${j * 50}ms`, boxShadow: '0 0 6px var(--accent-glow)' }} />
+              ))}
+            </div>
+
+            <p className="font-sans text-sm leading-relaxed mb-6" style={{ color: 'var(--text-secondary)' }}>
+              {r.text}
+            </p>
+
+            <div className="flex items-center justify-between pt-5" style={{ borderTop: '1px solid var(--border)' }}>
+              <div>
+                <p className="font-sans font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{r.name}</p>
+                <p className="font-mono text-xs tracking-wider uppercase mt-0.5" style={{ color: 'var(--text-muted)' }}>{r.role}</p>
+              </div>
+              <div className="w-7 h-7 flex items-center justify-center font-mono text-xs font-bold"
+                style={{ background: 'var(--accent)', color: 'var(--bg)' }}>
+                {r.name[0]}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CTASection() {
+  const [ref, visible] = useInView();
+  return (
+    <section ref={ref} className="relative py-36 overflow-hidden mesh-bg grid-overlay">
+      <Particles />
+
+      {/* Glow */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 100%, rgba(255,77,0,0.1) 0%, transparent 70%)' }} />
+
+      {/* Corners */}
+      <div className="absolute top-8 left-8 w-12 h-12 border-l-2 border-t-2 border-[var(--accent)] opacity-50" />
+      <div className="absolute bottom-8 right-8 w-12 h-12 border-r-2 border-b-2 border-[var(--accent)] opacity-50" />
+      <div className="absolute top-8 right-8 w-8 h-8 border-r border-t opacity-20" style={{ borderColor: 'var(--border-strong)' }} />
+      <div className="absolute bottom-8 left-8 w-8 h-8 border-l border-b opacity-20" style={{ borderColor: 'var(--border-strong)' }} />
+
+      <div className="container mx-auto px-6 text-center relative z-10">
+        <span
+          className="font-mono text-xs tracking-widest2 uppercase block mb-6 transition-all duration-700"
+          style={{ color: 'var(--accent)', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transitionDelay: '0.1s' }}
+        >
+          Начать сейчас
+        </span>
+
+        <h2
+          className="font-display tracking-wider mb-8 leading-[0.92] transition-all duration-1000"
+          style={{
+            fontSize: 'clamp(48px, 9vw, 110px)',
+            color: 'var(--text-primary)',
+            opacity: visible ? 1 : 0,
+            transform: visible ? 'translateY(0)' : 'translateY(24px)',
+            transitionDelay: '0.2s',
+          }}
+        >
+          ГОТОВЫ НАПЕЧАТАТЬ<br />
+          <span className="shimmer-text">ЧТО-ТО КРУТОЕ?</span>
+        </h2>
+
+        <p
+          className="font-sans mb-12 max-w-md mx-auto transition-all duration-700"
+          style={{
+            color: 'var(--text-secondary)',
+            opacity: visible ? 1 : 0,
+            transform: visible ? 'translateY(0)' : 'translateY(16px)',
+            transitionDelay: '0.3s',
+          }}
+        >
+          Загрузите STL-файл, получите цену за 10 секунд и оформите заказ онлайн
+        </p>
+
+        <div
+          className="flex flex-col sm:flex-row gap-4 justify-center transition-all duration-700"
+          style={{
+            opacity: visible ? 1 : 0,
+            transform: visible ? 'translateY(0)' : 'translateY(16px)',
+            transitionDelay: '0.4s',
+          }}
+        >
+          <Link to="/upload"
+            className="btn-primary group inline-flex items-center gap-3 px-10 py-5 font-sans font-semibold"
+            style={{ background: 'var(--accent)', color: 'var(--bg)' }}>
+            <Upload className="w-4 h-4" />
+            Загрузить модель
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1.5" />
+          </Link>
+          <Link to="/contact"
+            className="btn-ghost inline-flex items-center gap-3 px-8 py-5 font-sans font-medium border"
+            style={{ borderColor: 'var(--border-strong)', color: 'var(--text-secondary)' }}>
+            Связаться с нами
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Reusable section header ─── */
+function SectionHeader({ label, title, visible, inline = false }) {
+  if (inline) {
+    return (
+      <div className="flex items-baseline gap-5">
+        <span className="font-mono text-xs tracking-widest2 uppercase shrink-0" style={{ color: 'var(--text-muted)' }}>{label}</span>
+        <h2 className="font-display text-4xl md:text-5xl tracking-wider" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+      </div>
+    );
+  }
+  return (
+    <div className={`flex items-baseline gap-5 transition-all duration-700 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+      <span className="font-mono text-xs tracking-widest2 uppercase shrink-0" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <h2 className="font-display text-4xl md:text-5xl tracking-wider" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+      <span className="h-px flex-1 hidden md:block" style={{ background: 'linear-gradient(90deg, var(--border-strong), transparent)' }} />
     </div>
   );
 }
