@@ -8,7 +8,11 @@ export const createPost = async (userId, postData) => {
     data: {
       title: postData.title,
       description: postData.description,
-      tags: postData.tags || [],
+      tags: Array.isArray(postData.tags)
+        ? postData.tags
+        : typeof postData.tags === 'string' && postData.tags.trim()
+          ? postData.tags.split(',').map(t => t.trim()).filter(Boolean)
+          : [],
       user: {
         connect: { id: userId },
       },

@@ -1,8 +1,7 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, LogOut, ShoppingBag, User, Shield, Sun, Moon, Menu, X, MessageCircle, Bell } from 'lucide-react';
+import { ChevronDown, LogOut, ShoppingBag, User, Shield, Menu, X, MessageCircle, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { getUnreadCount as getUnreadMessages } from '../../api/messages.api.js';
 import { getUnreadCount as getUnreadNotifs } from '../../api/notifications.api.js';
 import SearchBar from '../search/SearchBar';
@@ -47,11 +46,9 @@ function Dropdown({ trigger, children }) {
         <div
           className="absolute top-full right-0 mt-2 w-44 py-1 z-50"
           style={{
-            background: 'rgba(13,13,24,0.85)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid var(--glass-border)',
-            boxShadow: '0 16px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07)',
+            background: '#0D0D18',
+            border: '1px solid var(--border-strong)',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.8)',
           }}
           onClick={() => setOpen(false)}
         >
@@ -96,7 +93,6 @@ export default function Header() {
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -283,27 +279,10 @@ export default function Header() {
             </>
           )}
 
-          <button
-            onClick={toggleTheme}
-            className="p-2 transition-colors duration-200"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-            aria-label="Тема"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
         </div>
 
         {/* Mobile buttons */}
         <div className="md:hidden flex items-center gap-2 ml-auto">
-          <button
-            onClick={toggleTheme}
-            className="p-2 transition-colors duration-200"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
           <button
             onClick={() => setMobileOpen(v => !v)}
             className="p-2 transition-colors duration-200"
