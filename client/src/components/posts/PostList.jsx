@@ -1,4 +1,3 @@
-// Список постов с пагинацией и skeleton-loader
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import PostCard from './PostCard';
@@ -7,15 +6,15 @@ import toast from 'react-hot-toast';
 
 function PostSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden animate-pulse">
-      <div className="h-48 bg-gray-200 dark:bg-gray-700" />
-      <div className="p-5 space-y-3">
-        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
-        <div className="flex justify-between mt-4">
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+    <div className="glass overflow-hidden animate-pulse" style={{ borderRadius: 4 }}>
+      <div style={{ height: 200, background: 'var(--bg-raised)' }} />
+      <div style={{ padding: '16px 18px 14px' }}>
+        <div style={{ height: 18, background: 'var(--bg-raised)', borderRadius: 3, width: '75%', marginBottom: 10 }} />
+        <div style={{ height: 13, background: 'var(--bg-raised)', borderRadius: 3, width: '100%', marginBottom: 6 }} />
+        <div style={{ height: 13, background: 'var(--bg-raised)', borderRadius: 3, width: '60%', marginBottom: 16 }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ height: 11, background: 'var(--bg-raised)', borderRadius: 3, width: '30%' }} />
+          <div style={{ height: 11, background: 'var(--bg-raised)', borderRadius: 3, width: '20%' }} />
         </div>
       </div>
     </div>
@@ -29,7 +28,6 @@ export default function PostList({ userId, searchQuery, sort = 'newest', tag = '
   const [isLoading, setIsLoading] = useState(true);
   const prevFilters = useRef({ searchQuery, userId, sort, tag });
 
-  // Сброс страницы при смене фильтров
   useEffect(() => {
     const prev = prevFilters.current;
     if (prev.searchQuery !== searchQuery || prev.userId !== userId || prev.sort !== sort || prev.tag !== tag) {
@@ -70,7 +68,7 @@ export default function PostList({ userId, searchQuery, sort = 'newest', tag = '
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         {Array.from({ length: 6 }).map((_, i) => <PostSkeleton key={i} />)}
       </div>
     );
@@ -78,10 +76,12 @@ export default function PostList({ userId, searchQuery, sort = 'newest', tag = '
 
   if (posts.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="text-6xl mb-4">🖼️</div>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">
-          {searchQuery ? `Ничего не найдено по запросу «${searchQuery}»` : 'Пока нет постов'}
+      <div className="glass text-center py-16" style={{ borderRadius: 12 }}>
+        <p className="font-display tracking-widest text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>
+          НИЧЕГО НЕ НАЙДЕНО
+        </p>
+        <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>
+          {searchQuery ? `Нет результатов по запросу «${searchQuery}»` : 'Постов пока нет'}
         </p>
       </div>
     );
@@ -89,38 +89,52 @@ export default function PostList({ userId, searchQuery, sort = 'newest', tag = '
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         {posts.map(post => <PostCard key={post.id} post={post} />)}
       </div>
 
       {pagination.pages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 flex-wrap">
           <button onClick={() => goToPage(page - 1)} disabled={page === 1}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-            <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            className="p-2 transition-colors"
+            style={{
+              background: 'var(--glass-bg)', border: '1px solid var(--border-strong)',
+              color: 'var(--text-secondary)', cursor: page === 1 ? 'not-allowed' : 'pointer',
+              opacity: page === 1 ? 0.4 : 1,
+            }}>
+            <ChevronLeft className="w-4 h-4" />
           </button>
           {[...Array(pagination.pages)].map((_, i) => {
             const p = i + 1;
             const near = p === 1 || p === pagination.pages || (p >= page - 2 && p <= page + 2);
             const dots = (p === page - 3 && p > 1) || (p === page + 3 && p < pagination.pages);
-            if (dots) return <span key={p} className="px-2 text-gray-500">...</span>;
+            if (dots) return <span key={p} className="px-2 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>…</span>;
             if (!near) return null;
             return (
               <button key={p} onClick={() => goToPage(p)}
-                className={`px-4 py-2 rounded-lg border transition ${p === page
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                className="px-4 py-2 font-mono text-xs transition-colors"
+                style={{
+                  background: p === page ? 'var(--accent)' : 'var(--glass-bg)',
+                  border: `1px solid ${p === page ? 'var(--accent)' : 'var(--border-strong)'}`,
+                  color: p === page ? '#000' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}>
                 {p}
               </button>
             );
           })}
           <button onClick={() => goToPage(page + 1)} disabled={page === pagination.pages}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-            <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            className="p-2 transition-colors"
+            style={{
+              background: 'var(--glass-bg)', border: '1px solid var(--border-strong)',
+              color: 'var(--text-secondary)', cursor: page === pagination.pages ? 'not-allowed' : 'pointer',
+              opacity: page === pagination.pages ? 0.4 : 1,
+            }}>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}
-      <div className="text-center mt-4 text-sm text-gray-500 dark:text-gray-400">
+      <div className="text-center mt-4 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
         Показано {posts.length} из {pagination.total} постов
       </div>
     </div>

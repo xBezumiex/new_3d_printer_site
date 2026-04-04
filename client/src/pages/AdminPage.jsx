@@ -207,7 +207,8 @@ export default function AdminPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 w-fit" style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', padding: 4, backdropFilter: 'blur(12px)' }}>
+        <div className="overflow-x-auto mb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex gap-1 w-fit" style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', padding: 4, backdropFilter: 'blur(12px)' }}>
           {[
             { key: 'orders',  label: 'Заказы' },
             { key: 'users',   label: 'Пользователи' },
@@ -220,6 +221,7 @@ export default function AdminPage() {
               {label}
             </button>
           ))}
+        </div>
         </div>
 
         {/* Orders tab */}

@@ -74,7 +74,7 @@ export default function PriceCalculator() {
   const matColor = MATERIAL_COLORS[calcParams.material] || 'var(--accent)';
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
+    <div className="calc-grid">
 
       {/* ── Left: Controls ──────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -229,7 +229,7 @@ export default function PriceCalculator() {
       </div>
 
       {/* ── Right: Price breakdown ───────────────── */}
-      <div style={{ position: 'sticky', top: 80 }}>
+      <div className="calc-grid-sticky" style={{ position: 'sticky', top: 80 }}>
         <div
           className="glass"
           style={{

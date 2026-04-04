@@ -1,17 +1,15 @@
-// Хлебные крошки для навигации
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 
-/**
- * @param {Array} items — [{ label: 'Главная', to: '/' }, { label: 'Заказы', to: '/dashboard' }, { label: '#001' }]
- * Последний элемент без to — текущая страница
- */
 export default function Breadcrumb({ items = [] }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-5 flex-wrap">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1 flex-wrap" style={{ marginBottom: 20 }}>
       <Link
         to="/"
-        className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        className="flex items-center gap-1 transition-colors"
+        style={{ color: 'var(--text-muted)', fontSize: 13 }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
       >
         <Home className="w-3.5 h-3.5" />
         <span className="sr-only">Главная</span>
@@ -19,16 +17,19 @@ export default function Breadcrumb({ items = [] }) {
 
       {items.map((item, idx) => (
         <span key={idx} className="flex items-center gap-1">
-          <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 shrink-0" />
+          <ChevronRight className="w-3 h-3 shrink-0" style={{ color: 'var(--text-muted)' }} />
           {item.to ? (
             <Link
               to={item.to}
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="font-mono text-xs tracking-wider transition-colors"
+              style={{ color: 'var(--text-secondary)', fontSize: 12 }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
             >
               {item.label}
             </Link>
           ) : (
-            <span className="text-gray-900 dark:text-white font-medium truncate max-w-[200px]">
+            <span className="font-mono text-xs font-medium truncate" style={{ color: 'var(--text-primary)', fontSize: 12, maxWidth: 200 }}>
               {item.label}
             </span>
           )}
