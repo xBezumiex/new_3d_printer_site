@@ -166,14 +166,12 @@ export default function PriceCalculator() {
             type="range" min="10" max="100" step="5"
             value={calcParams.infill}
             onChange={e => handleChange('infill', parseInt(e.target.value))}
-            style={{
-              background: `linear-gradient(to right,
-                var(--accent) 0%,
-                var(--accent) ${((calcParams.infill - 10) / 90) * 100}%,
-                var(--border-strong) ${((calcParams.infill - 10) / 90) * 100}%,
-                var(--border-strong) 100%
-              )`,
-            }}
+            style={(() => {
+              const pct = ((calcParams.infill - 10) / 90) * 100;
+              return {
+                background: `linear-gradient(to right, var(--accent) ${pct}%, var(--border-strong) ${pct}%)`,
+              };
+            })()}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
             {['10% лёгкое', '55% среднее', '100% монолит'].map(t => (

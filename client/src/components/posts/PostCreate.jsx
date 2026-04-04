@@ -1,11 +1,22 @@
-// Форма создания поста
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as postsApi from '../../api/posts.api';
 import axiosInstance from '../../api/axios';
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px 14px',
+  background: 'var(--bg-raised)',
+  border: '1px solid var(--border-strong)',
+  color: 'var(--text-primary)',
+  fontFamily: 'DM Sans, sans-serif',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 0.2s',
+};
 
 export default function PostCreate() {
   const navigate = useNavigate();
@@ -13,35 +24,25 @@ export default function PostCreate() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-
     if (selectedFiles.length + files.length > 10) {
       toast.error('Максимум 10 изображений');
       return;
     }
-
-    setSelectedFiles((prev) => [...prev, ...files]);
-
-    // Создание превью
-    files.forEach((file) => {
+    setSelectedFiles(prev => [...prev, ...files]);
+    files.forEach(file => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrls((prev) => [...prev, reader.result]);
-      };
+      reader.onloadend = () => setPreviewUrls(prev => [...prev, reader.result]);
       reader.readAsDataURL(file);
     });
   };
 
   const removeImage = (index) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit = async (data) => {
@@ -51,26 +52,31 @@ export default function PostCreate() {
       const postResponse = await postsApi.createPost(data);
       const postId = postResponse.data.data.post.id;
 
-      // 2. Загрузить изображения на сервер (если есть)
+      // 2. Загрузить изображения если есть
       if (selectedFiles.length > 0) {
         const formData = new FormData();
-        selectedFiles.forEach((file) => formData.append('images', file));
+        selectedFiles.forEach(file => formData.append('images', file));
 
-        const uploadResponse = await axiosInstance.post('/upload/images', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-
-        const imageUrls = uploadResponse.data.data.urls;
-
-        // 3. Добавить изображения к посту
-        await postsApi.addImagesToPost(postId, imageUrls);
+        try {
+          const uploadResponse = await axiosInstance.post('/upload/images', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          const imageUrls = uploadResponse.data.data.urls;
+          await postsApi.addImagesToPost(postId, imageUrls);
+        } catch (uploadErr) {
+          // Пост создан, но фото не загрузились — переходим с предупреждением
+          const msg = uploadErr.response?.data?.message || uploadErr.message || 'Ошибка загрузки фото';
+          toast.error(`Пост создан, но фото не загрузились: ${msg}`, { duration: 5000 });
+          navigate(`/posts/${postId}`);
+          return;
+        }
       }
 
       toast.success('Пост успешно создан!');
       navigate(`/posts/${postId}`);
     } catch (error) {
-      console.error('Ошибка создания поста:', error);
-      toast.error(error.message || 'Не удалось создать пост');
+      const msg = error.response?.data?.message || error.message || 'Не удалось создать пост';
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -80,118 +86,129 @@ export default function PostCreate() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Заголовок */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block font-mono text-xs tracking-wider uppercase mb-2" style={{ color: 'var(--text-muted)' }}>
           Заголовок *
         </label>
         <input
           type="text"
           {...register('title', {
             required: 'Заголовок обязателен',
-            minLength: {
-              value: 3,
-              message: 'Минимум 3 символа',
-            },
-            maxLength: {
-              value: 200,
-              message: 'Максимум 200 символов',
-            },
+            minLength: { value: 3, message: 'Минимум 3 символа' },
+            maxLength: { value: 200, message: 'Максимум 200 символов' },
           })}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          style={inputStyle}
           placeholder="Название вашего проекта"
           disabled={isSubmitting}
+          onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+          onBlur={e => e.target.style.borderColor = errors.title ? '#f87171' : 'var(--border-strong)'}
         />
         {errors.title && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.title.message}</p>
+          <p className="mt-1.5 font-sans text-xs" style={{ color: '#f87171' }}>{errors.title.message}</p>
         )}
       </div>
 
-      {/* Содержание */}
+      {/* Описание */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block font-mono text-xs tracking-wider uppercase mb-2" style={{ color: 'var(--text-muted)' }}>
           Описание *
         </label>
         <textarea
           {...register('description', {
             required: 'Описание обязательно',
-            minLength: {
-              value: 10,
-              message: 'Минимум 10 символов',
-            },
-            maxLength: {
-              value: 5000,
-              message: 'Максимум 5000 символов',
-            },
+            minLength: { value: 10, message: 'Минимум 10 символов' },
+            maxLength: { value: 5000, message: 'Максимум 5000 символов' },
           })}
-          rows={10}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          placeholder="Расскажите о вашем проекте: что вы печатали, какие материалы использовали, какие были трудности..."
+          rows={8}
+          style={{ ...inputStyle, resize: 'vertical', minHeight: 160 }}
+          placeholder="Расскажите о вашем проекте: материалы, процесс, результат..."
           disabled={isSubmitting}
+          onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+          onBlur={e => e.target.style.borderColor = errors.description ? '#f87171' : 'var(--border-strong)'}
         />
-        {errors.content && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.content.message}</p>
+        {errors.description && (
+          <p className="mt-1.5 font-sans text-xs" style={{ color: '#f87171' }}>{errors.description.message}</p>
         )}
+      </div>
+
+      {/* Теги */}
+      <div>
+        <label className="block font-mono text-xs tracking-wider uppercase mb-2" style={{ color: 'var(--text-muted)' }}>
+          Теги <span style={{ color: 'var(--text-muted)', fontFamily: 'DM Sans', textTransform: 'none', letterSpacing: 0 }}>(через запятую)</span>
+        </label>
+        <input
+          type="text"
+          {...register('tags')}
+          style={inputStyle}
+          placeholder="fdm, pla, prototyping"
+          disabled={isSubmitting}
+          onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+          onBlur={e => e.target.style.borderColor = 'var(--border-strong)'}
+        />
       </div>
 
       {/* Изображения */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          Изображения (максимум 10)
+        <label className="block font-mono text-xs tracking-wider uppercase mb-3" style={{ color: 'var(--text-muted)' }}>
+          Изображения <span style={{ color: 'var(--text-muted)', fontFamily: 'DM Sans', textTransform: 'none', letterSpacing: 0 }}>(макс. 10)</span>
         </label>
 
-        {/* Кнопка загрузки */}
-        <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition">
-          <Upload className="w-5 h-5" />
-          <span>Загрузить изображения</span>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-            disabled={isSubmitting || selectedFiles.length >= 10}
-          />
+        <label style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          padding: '9px 18px', background: 'var(--bg-raised)',
+          border: '1px solid var(--border-strong)', cursor: 'pointer',
+          color: 'var(--text-secondary)', fontFamily: 'DM Sans, sans-serif', fontSize: 13,
+          opacity: isSubmitting || selectedFiles.length >= 10 ? 0.5 : 1,
+          transition: 'border-color 0.2s, color 0.2s',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}>
+          <Upload className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+          Выбрать изображения
+          <input type="file" accept="image/*" multiple onChange={handleFileSelect} className="hidden"
+            disabled={isSubmitting || selectedFiles.length >= 10} />
         </label>
 
-        {/* Превью изображений */}
         {previewUrls.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {previewUrls.map((url, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={url}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
-                  disabled={isSubmitting}
-                >
-                  <X className="w-4 h-4" />
-                </button>
+              <div key={index} className="relative group" style={{ aspectRatio: '1' }}>
+                <img src={url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" style={{ border: '1px solid var(--border)' }} />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: 'rgba(0,0,0,0.5)' }}>
+                  <button type="button" onClick={() => removeImage(index)}
+                    className="absolute top-1.5 right-1.5 flex items-center justify-center w-6 h-6 transition-colors"
+                    style={{ background: 'rgba(248,113,113,0.9)', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: 0 }}
+                    disabled={isSubmitting}>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {selectedFiles.length === 0 && (
+          <div className="mt-3 flex items-center gap-2">
+            <ImageIcon className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+            <span className="font-sans text-sm" style={{ color: 'var(--text-muted)' }}>Фото не выбраны — пост будет без изображений</span>
           </div>
         )}
       </div>
 
       {/* Кнопки */}
-      <div className="flex gap-4">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg transition"
-        >
-          {isSubmitting ? 'Создание...' : 'Опубликовать пост'}
+      <div className="flex gap-3 pt-2">
+        <button type="submit" disabled={isSubmitting}
+          className="flex items-center gap-2 font-sans font-semibold text-sm px-8 py-3 transition-opacity"
+          style={{ background: 'var(--accent)', color: '#000', border: 'none', cursor: isSubmitting ? 'wait' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
+          {isSubmitting
+            ? <><span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin inline-block" /> Публикация...</>
+            : <><Send className="w-4 h-4" /> Опубликовать</>}
         </button>
-
-        <button
-          type="button"
-          onClick={() => navigate('/posts')}
-          disabled={isSubmitting}
-          className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-        >
+        <button type="button" onClick={() => navigate('/posts')} disabled={isSubmitting}
+          className="font-sans font-medium text-sm px-6 py-3 transition-all"
+          style={{ background: 'var(--glass-bg)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}>
           Отмена
         </button>
       </div>

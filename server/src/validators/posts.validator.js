@@ -13,7 +13,10 @@ export const createPostSchema = Joi.object({
     'string.min': 'Содержание должно содержать минимум 10 символов',
     'string.max': 'Содержание не должно превышать 5000 символов',
   }),
-  // images - массив URL изображений (загружаются отдельно через Cloudinary)
+  tags: Joi.alternatives().try(
+    Joi.array().items(Joi.string().max(50)).max(10),
+    Joi.string().max(500)
+  ).optional(),
 });
 
 // Обновление поста

@@ -291,7 +291,7 @@ input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 20px;           /* высота клик-зоны = высота thumb */
+  height: 16px;
   background: transparent;
   outline: none;
   cursor: pointer;
@@ -299,50 +299,48 @@ input[type="range"] {
   margin: 0;
   display: block;
 }
-/* Webkit: трек */
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
-  background: var(--border-strong); /* fallback; fill задаётся inline-style */
 }
-/* Webkit: thumb — вертикально центрируется автоматически внутри 20px */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 0 10px var(--accent-glow);
+  box-shadow: 0 0 6px var(--accent-glow);
   border: 2px solid var(--bg-surface);
-  margin-top: -7px;       /* (18px - 4px) / 2 = 7px → центр thumb на треке */
-  transition: box-shadow 0.2s;
+  margin-top: -5.5px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 input[type="range"]:focus::-webkit-slider-thumb {
-  box-shadow: 0 0 0 4px var(--accent-dim), 0 0 10px var(--accent-glow);
+  box-shadow: 0 0 0 3px var(--accent-dim), 0 0 8px var(--accent-glow);
 }
-/* Firefox: трек */
 input[type="range"]::-moz-range-track {
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
   background: var(--border-strong);
 }
-/* Firefox: заливка до thumb */
 input[type="range"]::-moz-range-progress {
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
   background: var(--accent);
 }
-/* Firefox: thumb */
 input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
   border: 2px solid var(--bg-surface);
-  box-shadow: 0 0 10px var(--accent-glow);
+  box-shadow: 0 0 6px var(--accent-glow);
 }
 
 /* ─── Readable small text ─── */
