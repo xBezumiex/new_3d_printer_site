@@ -1,4 +1,3 @@
-// Страница поиска
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Search, User, FileText } from 'lucide-react';
@@ -14,9 +13,7 @@ export default function SearchPage() {
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    if (query) {
-      performSearch();
-    }
+    if (query) performSearch();
   }, [query, activeTab]);
 
   const performSearch = async () => {
@@ -24,172 +21,121 @@ export default function SearchPage() {
     try {
       const response = await searchApi.search(query, activeTab, 20);
       setResults(response.data.data || { posts: [], users: [], total: 0 });
-    } catch (error) {
-      console.error('Ошибка поиска:', error);
-      toast.error('Не удалось выполнить поиск');
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { toast.error('Не удалось выполнить поиск'); }
+    finally { setIsLoading(false); }
   };
 
-  const renderUserCard = (user) => (
-    <Link
-      key={user.id}
-      to={`/users/${user.id}`}
-      className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition"
-    >
-      {/* Аватар */}
-      <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
-        {user.avatar ? (
-          <img src={user.avatar} alt={user.name} loading="lazy" className="w-full h-full object-cover" />
-        ) : (
-          <div className="flex items-center justify-center w-full h-full text-white text-xl font-bold">
-            {user.name?.[0]?.toUpperCase() || '?'}
-          </div>
-        )}
+  const UserCard = ({ user }) => (
+    <Link to={`/users/${user.id}`}
+      className="glass glass-hover flex items-center gap-4 p-4 transition-all">
+      <div className="w-14 h-14 flex items-center justify-center shrink-0 font-display text-2xl"
+        style={{ background: 'linear-gradient(135deg, rgba(255,77,0,0.2), rgba(79,142,247,0.2))', border: '1px solid var(--border-strong)', color: 'var(--text-primary)' }}>
+        {user.avatar
+          ? <img src={user.avatar} alt={user.name} loading="lazy" className="w-full h-full object-cover" />
+          : user.name?.[0]?.toUpperCase() || '?'
+        }
       </div>
-
-      {/* Информация */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-          {user.name}
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{user.email}</p>
-        {user.bio && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-            {user.bio}
-          </p>
-        )}
-        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-500">
-          <span>{user._count?.posts || 0} постов</span>
+        <h3 className="font-sans font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{user.name}</h3>
+        <p className="font-mono text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
+        {user.bio && <p className="font-sans text-xs mt-1 line-clamp-1" style={{ color: 'var(--text-secondary)' }}>{user.bio}</p>}
+        <div className="flex gap-3 mt-1.5">
+          <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>{user._count?.posts || 0} постов</span>
           {user._count?.subscribers !== undefined && (
-            <span>{user._count.subscribers} подписчиков</span>
+            <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>{user._count.subscribers} подписчиков</span>
           )}
         </div>
       </div>
     </Link>
   );
 
-  if (!query) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center py-12">
-            <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Введите запрос для поиска
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Найдите посты или пользователей по ключевым словам
-            </p>
-          </div>
-        </div>
+  if (!query) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+      <div className="text-center">
+        <Search className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+        <p className="font-display tracking-widest text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>ПОИСК</p>
+        <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>Введите запрос для поиска постов и пользователей</p>
       </div>
-    );
-  }
+    </div>
+  );
+
+  const tabs = [
+    { key: 'all',   label: 'Все' },
+    { key: 'posts', label: 'Посты' },
+    { key: 'users', label: 'Пользователи' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Заголовок */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Результаты поиска: "{query}"
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Найдено результатов: {results.total}
-            </p>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Header */}
+      <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', padding: '48px 0 32px' }}>
+        <div className="container mx-auto px-6">
+          <p className="font-mono text-xs tracking-widest2 uppercase mb-3" style={{ color: 'var(--accent)' }}>/ поиск</p>
+          <h1 className="font-display tracking-widest mb-1" style={{ fontSize: 'clamp(1.8rem,4vw,3rem)', color: 'var(--text-primary)', lineHeight: 1 }}>
+            "{query}"
+          </h1>
+          <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+            Найдено: {results.total}
+          </p>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8">
+        {/* Tabs */}
+        <div className="flex gap-1 mb-8 w-fit" style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', padding: 4, backdropFilter: 'blur(12px)' }}>
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setActiveTab(t.key)}
+              className="px-4 py-2 font-mono text-xs tracking-wider transition-all"
+              style={{ background: activeTab === t.key ? 'var(--accent)' : 'transparent', color: activeTab === t.key ? '#000' : 'var(--text-secondary)' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-2 rounded-full animate-spin"
+              style={{ borderColor: 'var(--border-strong)', borderTopColor: 'var(--accent)' }} />
           </div>
-
-          {/* Табы */}
-          <div className="flex gap-4 mb-8 border-b border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`pb-3 px-4 font-semibold transition ${
-                activeTab === 'all'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Все
-            </button>
-            <button
-              onClick={() => setActiveTab('posts')}
-              className={`pb-3 px-4 font-semibold transition ${
-                activeTab === 'posts'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Посты
-            </button>
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`pb-3 px-4 font-semibold transition ${
-                activeTab === 'users'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Пользователи
-            </button>
-          </div>
-
-          {/* Результаты */}
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {/* Посты */}
-              {(activeTab === 'all' || activeTab === 'posts') && results.posts?.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <FileText className="w-5 h-5 text-blue-600" />
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                      Посты ({results.posts.length})
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {results.posts.map((post) => (
-                      <PostCard key={post.id} post={post} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Пользователи */}
-              {(activeTab === 'all' || activeTab === 'users') && results.users?.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <User className="w-5 h-5 text-purple-600" />
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                      Пользователи ({results.users.length})
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {results.users.map((user) => renderUserCard(user))}
-                  </div>
-                </div>
-              )}
-
-              {/* Пустые результаты */}
-              {results.total === 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-12 text-center">
-                  <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    Ничего не найдено
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Попробуйте изменить поисковый запрос
+        ) : (
+          <div className="space-y-10">
+            {(activeTab === 'all' || activeTab === 'posts') && results.posts?.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-5">
+                  <FileText className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+                  <p className="font-mono text-xs tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+                    Посты ({results.posts.length})
                   </p>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {results.posts.map(post => <PostCard key={post.id} post={post} />)}
+                </div>
+              </div>
+            )}
+
+            {(activeTab === 'all' || activeTab === 'users') && results.users?.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-5">
+                  <User className="w-4 h-4" style={{ color: '#C084FC' }} />
+                  <p className="font-mono text-xs tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+                    Пользователи ({results.users.length})
+                  </p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {results.users.map(user => <UserCard key={user.id} user={user} />)}
+                </div>
+              </div>
+            )}
+
+            {results.total === 0 && (
+              <div className="glass py-20 text-center">
+                <Search className="w-10 h-10 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+                <p className="font-display tracking-widest text-xl mb-2" style={{ color: 'var(--text-primary)' }}>НИЧЕГО НЕ НАЙДЕНО</p>
+                <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>Попробуйте изменить поисковый запрос</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

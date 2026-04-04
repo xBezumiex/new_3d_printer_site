@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, CheckCheck, Trash2, UserPlus, Heart, MessageSquare, Package, Trophy } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, UserPlus, Heart, MessageSquare, Package, Trophy } from 'lucide-react';
 import * as notificationsApi from '../api/notifications.api.js';
 import toast from 'react-hot-toast';
 
 const TYPE_CONFIG = {
-  NEW_FOLLOWER:       { icon: UserPlus,      color: 'text-blue-500',   bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  POST_LIKED:         { icon: Heart,         color: 'text-red-500',    bg: 'bg-red-50 dark:bg-red-900/20' },
-  POST_COMMENTED:     { icon: MessageSquare, color: 'text-green-500',  bg: 'bg-green-50 dark:bg-green-900/20' },
-  ORDER_STATUS_CHANGED:{ icon: Package,      color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-  ACHIEVEMENT_EARNED: { icon: Trophy,        color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
+  NEW_FOLLOWER:        { icon: UserPlus,      color: '#4F8EF7' },
+  POST_LIKED:          { icon: Heart,         color: '#f87171' },
+  POST_COMMENTED:      { icon: MessageSquare, color: '#4ADE80' },
+  ORDER_STATUS_CHANGED:{ icon: Package,       color: '#C084FC' },
+  ACHIEVEMENT_EARNED:  { icon: Trophy,        color: '#FACC15' },
 };
 
 function timeAgo(date) {
@@ -25,19 +25,14 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const load = async () => {
     try {
       const res = await notificationsApi.getNotifications();
       setNotifications(res.data?.notifications || []);
-    } catch {
-      toast.error('Ошибка загрузки уведомлений');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error('Ошибка загрузки уведомлений'); }
+    finally { setLoading(false); }
   };
 
   const handleClick = async (n) => {
@@ -63,56 +58,83 @@ export default function NotificationsPage() {
   const unread = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <Bell className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Уведомления</h1>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Header */}
+      <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', padding: '48px 0 32px' }}>
+        <div className="container mx-auto px-6">
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="font-mono text-xs tracking-widest2 uppercase mb-3" style={{ color: 'var(--accent)' }}>/ уведомления</p>
+              <div className="flex items-center gap-3">
+                <h1 className="font-display tracking-widest" style={{ fontSize: 'clamp(1.8rem,4vw,3rem)', color: 'var(--text-primary)', lineHeight: 1 }}>
+                  УВЕДОМЛЕНИЯ
+                </h1>
+                {unread > 0 && (
+                  <span className="font-mono text-xs px-2 py-1"
+                    style={{ background: 'var(--accent)', color: '#000' }}>
+                    {unread}
+                  </span>
+                )}
+              </div>
+            </div>
             {unread > 0 && (
-              <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">{unread}</span>
+              <button onClick={handleMarkAll}
+                className="flex items-center gap-2 font-mono text-xs tracking-wider transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+                <CheckCheck className="w-4 h-4" /> Прочитать все
+              </button>
             )}
           </div>
-          {unread > 0 && (
-            <button onClick={handleMarkAll}
-              className="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-              <CheckCheck className="w-4 h-4" /> Прочитать все
-            </button>
-          )}
         </div>
+      </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="container mx-auto px-6 py-10 max-w-2xl">
+        <div className="glass overflow-hidden">
           {loading ? (
-            <div className="flex justify-center py-16">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            <div className="flex justify-center py-20">
+              <div className="w-8 h-8 border-2 rounded-full animate-spin"
+                style={{ borderColor: 'var(--border-strong)', borderTopColor: 'var(--accent)' }} />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Bell className="w-12 h-12 text-gray-200 dark:text-gray-700" />
-              <p className="text-gray-400 dark:text-gray-500">Нет уведомлений</p>
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Bell className="w-10 h-10" style={{ color: 'var(--text-muted)' }} />
+              <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>Нет уведомлений</p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-700/50">
-              {notifications.map(n => {
+            <ul>
+              {notifications.map((n, i) => {
                 const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG.POST_LIKED;
                 const Icon = cfg.icon;
                 return (
                   <li key={n.id}
                     onClick={() => handleClick(n)}
-                    className={`flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors group ${!n.isRead ? 'bg-blue-50/40 dark:bg-blue-900/10' : ''}`}>
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${cfg.bg}`}>
-                      <Icon className={`w-4 h-4 ${cfg.color}`} />
+                    className="flex items-start gap-3 px-5 py-4 cursor-pointer group transition-colors"
+                    style={{
+                      borderBottom: i < notifications.length - 1 ? '1px solid var(--border)' : 'none',
+                      background: !n.isRead ? `${cfg.color}06` : 'transparent',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-bg-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = !n.isRead ? `${cfg.color}06` : 'transparent'}>
+                    <div className="w-9 h-9 flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ background: `${cfg.color}15`, border: `1px solid ${cfg.color}30` }}>
+                      <Icon className="w-4 h-4" style={{ color: cfg.color }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${n.isRead ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white font-medium'}`}>
+                      <p className="font-sans text-sm leading-snug"
+                        style={{ color: n.isRead ? 'var(--text-secondary)' : 'var(--text-primary)', fontWeight: n.isRead ? 400 : 500 }}>
                         {n.message}
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{timeAgo(n.createdAt)}</p>
+                      <p className="font-mono text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>{timeAgo(n.createdAt)}</p>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {!n.isRead && <span className="w-2 h-2 rounded-full bg-blue-500" />}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {!n.isRead && <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.color }} />}
                       <button onClick={(e) => handleDelete(e, n.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-400 hover:text-red-500 transition-all">
+                        className="opacity-0 group-hover:opacity-100 p-1.5 transition-all"
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

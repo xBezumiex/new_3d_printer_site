@@ -1,4 +1,3 @@
-// Страница создания поста
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PostCreate from '../components/posts/PostCreate';
@@ -7,25 +6,26 @@ export default function CreatePostPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-      <div className="container mx-auto px-4">
-        {/* Кнопка назад */}
-        <button
-          onClick={() => navigate('/posts')}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Назад к галерее
-        </button>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', padding: '32px 0 24px' }}>
+        <div className="container mx-auto px-6">
+          <button onClick={() => navigate('/posts')}
+            className="flex items-center gap-2 mb-4 font-mono text-xs tracking-wider transition-colors"
+            style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+            <ArrowLeft className="w-4 h-4" /> Назад к галерее
+          </button>
+          <p className="font-mono text-xs tracking-widest2 uppercase mb-3" style={{ color: 'var(--accent)' }}>/ публикация</p>
+          <h1 className="font-display tracking-widest" style={{ fontSize: 'clamp(1.8rem,4vw,3rem)', color: 'var(--text-primary)', lineHeight: 1 }}>
+            СОЗДАТЬ ПОСТ
+          </h1>
+        </div>
+      </div>
 
-        {/* Форма создания */}
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-              Создать пост
-            </h1>
-            <PostCreate />
-          </div>
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="glass p-8">
+          <PostCreate />
         </div>
       </div>
     </div>
