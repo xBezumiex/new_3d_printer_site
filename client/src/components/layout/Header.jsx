@@ -170,9 +170,9 @@ export default function Header() {
                 key={to}
                 to={to}
                 className="block px-4 py-2 text-sm font-sans transition-colors duration-150"
-                style={{ color: 'var(--text-secondary)' }}
+                style={{ color: 'var(--text-primary)' }}
                 onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--bg-raised)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'transparent'; }}
               >
                 {label}
               </Link>
@@ -239,17 +239,17 @@ export default function Header() {
                 </div>
                 <Link to="/profile"
                   className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-sans transition-colors duration-150"
-                  style={{ color: 'var(--text-secondary)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-raised)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
+                  style={{ color: 'var(--text-primary)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--bg-raised)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'transparent'; }}
                 >
                   <User className="w-3.5 h-3.5" /> Профиль
                 </Link>
                 <Link to="/dashboard"
                   className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-sans transition-colors duration-150"
-                  style={{ color: 'var(--text-secondary)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-raised)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
+                  style={{ color: 'var(--text-primary)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--bg-raised)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'transparent'; }}
                 >
                   <ShoppingBag className="w-3.5 h-3.5" /> Мои заказы
                 </Link>

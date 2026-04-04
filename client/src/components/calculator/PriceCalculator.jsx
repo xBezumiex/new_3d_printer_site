@@ -26,7 +26,7 @@ const MATERIAL_COLORS = {
 
 function Label({ children }) {
   return (
-    <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 10 }}>
+    <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 10 }}>
       {children}
     </div>
   );
