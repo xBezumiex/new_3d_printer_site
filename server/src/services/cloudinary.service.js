@@ -17,10 +17,6 @@ export const uploadImageBuffer = async (buffer, mimeType, folder = '3d-print-lab
     const result = await cloudinary.uploader.upload(dataUri, {
       folder,
       resource_type: 'image',
-      transformation: [
-        { quality: 'auto:good' },
-        { fetch_format: 'auto' },
-      ],
       ...options,
     });
 
@@ -32,8 +28,9 @@ export const uploadImageBuffer = async (buffer, mimeType, folder = '3d-print-lab
       height: result.height,
     };
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    throw new AppError('Ошибка загрузки изображения в Cloudinary', 500);
+    const msg = error?.message || error?.error?.message || JSON.stringify(error);
+    console.error('Cloudinary upload error:', msg);
+    throw new AppError(`Cloudinary: ${msg}`, 500);
   }
 };
 
