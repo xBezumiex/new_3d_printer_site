@@ -1,62 +1,71 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Send, ArrowLeft, Image as ImageIcon, Trash2, MessageSquare, X } from 'lucide-react';
+import { Send, ArrowLeft, Image as ImageIcon, Trash2, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import * as messagesApi from '../api/messages.api.js';
 import axiosInstance from '../api/axios.js';
 
-const POLL_INTERVAL = 4000; // 4 секунды
+const POLL_INTERVAL = 4000;
 
 function OnlineDot({ lastActivity }) {
   if (!lastActivity) return null;
   const isOnline = Date.now() - new Date(lastActivity).getTime() < 5 * 60 * 1000;
   return (
-    <span className={`inline-block w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
+    <span className="inline-block w-2 h-2 rounded-full shrink-0"
+      style={{ background: isOnline ? '#4ADE80' : 'var(--text-muted)' }} />
   );
 }
 
 function Avatar({ user, size = 'md' }) {
-  const cls = size === 'sm' ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm';
+  const sz = size === 'sm' ? { width: 32, height: 32, fontSize: 12 } : { width: 40, height: 40, fontSize: 14 };
   return user?.avatar
-    ? <img src={user.avatar} alt={user.name} className={`${cls} rounded-full object-cover`} />
-    : <div className={`${cls} rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold`}>
+    ? <img src={user.avatar} alt={user.name} style={{ ...sz, borderRadius: '50%', objectFit: 'cover' }} />
+    : <div style={{
+        ...sz, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'linear-gradient(135deg, rgba(255,77,0,0.3), rgba(79,142,247,0.3))',
+        border: '1px solid var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'Bebas Neue, sans-serif',
+      }}>
         {user?.name?.[0]?.toUpperCase() || '?'}
       </div>;
 }
 
-// Список диалогов (левая панель)
 function ConversationList({ conversations, activeId, onSelect }) {
   if (conversations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-        <MessageSquare className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">Нет диалогов</p>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Напишите первым!</p>
+        <MessageSquare className="w-10 h-10 mb-3" style={{ color: 'var(--text-muted)' }} />
+        <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>Нет диалогов</p>
+        <p className="font-mono text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Напишите первым!</p>
       </div>
     );
   }
 
   return (
-    <ul className="divide-y divide-gray-100 dark:divide-gray-700/50">
+    <ul style={{ borderTop: '1px solid var(--border)' }}>
       {conversations.map(({ partner, lastMessage, unreadCount }) => (
-        <li key={partner.id}>
-          <button
-            onClick={() => onSelect(partner.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left ${activeId === partner.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-          >
+        <li key={partner.id} style={{ borderBottom: '1px solid var(--border)' }}>
+          <button onClick={() => onSelect(partner.id)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all"
+            style={{
+              background: activeId === partner.id ? 'rgba(255,77,0,0.08)' : 'transparent',
+              borderLeft: activeId === partner.id ? '2px solid var(--accent)' : '2px solid transparent',
+            }}
+            onMouseEnter={e => { if (activeId !== partner.id) e.currentTarget.style.background = 'var(--bg-raised)'; }}
+            onMouseLeave={e => { if (activeId !== partner.id) e.currentTarget.style.background = 'transparent'; }}>
             <div className="relative shrink-0">
               <Avatar user={partner} />
               <span className="absolute -bottom-0.5 -right-0.5"><OnlineDot lastActivity={partner.lastActivity} /></span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{partner.name}</p>
+                <p className="font-sans font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{partner.name}</p>
                 {unreadCount > 0 && (
-                  <span className="shrink-0 bg-blue-600 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center">{unreadCount}</span>
+                  <span className="shrink-0 font-mono text-[10px] px-1.5 py-0.5 min-w-[1.25rem] text-center"
+                    style={{ background: 'var(--accent)', color: '#000', borderRadius: 2 }}>{unreadCount}</span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              <p className="font-sans text-xs truncate mt-0.5" style={{ color: 'var(--text-muted)' }}>
                 {lastMessage.imageUrl && !lastMessage.text ? '📷 Фото' : lastMessage.text || ''}
               </p>
             </div>
@@ -67,7 +76,6 @@ function ConversationList({ conversations, activeId, onSelect }) {
   );
 }
 
-// Окно чата (правая панель)
 function ChatWindow({ partnerId, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [partner, setPartner] = useState(null);
@@ -87,9 +95,7 @@ function ChatWindow({ partnerId, currentUser }) {
           || res.data.messages[0]?.sender;
         if (p && p.id !== currentUser.id) setPartner(p);
       }
-    } catch {
-      // тихо
-    }
+    } catch {}
   }, [partnerId, currentUser.id]);
 
   useEffect(() => {
@@ -102,7 +108,6 @@ function ChatWindow({ partnerId, currentUser }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Загрузить партнёра если нет сообщений
   useEffect(() => {
     if (!partner) {
       axiosInstance.get(`/users/${partnerId}`).then(r => {
@@ -122,9 +127,7 @@ function ChatWindow({ partnerId, currentUser }) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Ошибка отправки');
-    } finally {
-      setSending(false);
-    }
+    } finally { setSending(false); }
   };
 
   const sendImage = async (file) => {
@@ -139,26 +142,23 @@ function ChatWindow({ partnerId, currentUser }) {
       const res = await messagesApi.sendMessage(partnerId, { imageUrl });
       setMessages(prev => [...prev, res.data]);
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } catch {
-      toast.error('Ошибка загрузки изображения');
-    } finally {
-      setUploadingImage(false);
-    }
+    } catch { toast.error('Ошибка загрузки изображения'); }
+    finally { setUploadingImage(false); }
   };
 
   const deleteMsg = async (msgId) => {
     try {
       await messagesApi.deleteMessage(msgId);
       setMessages(prev => prev.filter(m => m.id !== msgId));
-    } catch {
-      toast.error('Ошибка удаления');
-    }
+    } catch { toast.error('Ошибка удаления'); }
   };
+
+  const isOnline = partner?.lastActivity && Date.now() - new Date(partner.lastActivity).getTime() < 5 * 60 * 1000;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Шапка чата */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
         {partner ? (
           <>
             <div className="relative">
@@ -166,30 +166,30 @@ function ChatWindow({ partnerId, currentUser }) {
               <span className="absolute -bottom-0.5 -right-0.5"><OnlineDot lastActivity={partner.lastActivity} /></span>
             </div>
             <div>
-              <Link to={`/users/${partner.id}`} className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 transition-colors">
+              <Link to={`/users/${partner.id}`} className="font-sans font-semibold text-sm transition-colors"
+                style={{ color: 'var(--text-primary)' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}>
                 {partner.name}
               </Link>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {partner.lastActivity && Date.now() - new Date(partner.lastActivity).getTime() < 5 * 60 * 1000
-                  ? 'В сети'
-                  : partner.lastActivity
-                    ? `Был(а) ${new Date(partner.lastActivity).toLocaleString('ru', { hour: '2-digit', minute: '2-digit' })}`
-                    : 'Не в сети'
-                }
+              <p className="font-mono text-[10px]" style={{ color: isOnline ? '#4ADE80' : 'var(--text-muted)' }}>
+                {isOnline ? 'В сети' : partner.lastActivity
+                  ? `Был(а) ${new Date(partner.lastActivity).toLocaleString('ru', { hour: '2-digit', minute: '2-digit' })}`
+                  : 'Не в сети'}
               </p>
             </div>
           </>
         ) : (
-          <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
+          <div className="h-10 w-32 rounded animate-pulse" style={{ background: 'var(--bg-raised)' }} />
         )}
       </div>
 
-      {/* Сообщения */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900/50">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: 'var(--bg)' }}>
         {messages.length === 0 && (
           <div className="text-center py-12">
-            <MessageSquare className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">Начните диалог!</p>
+            <MessageSquare className="w-10 h-10 mx-auto mb-2" style={{ color: 'var(--text-muted)' }} />
+            <p className="font-sans text-sm" style={{ color: 'var(--text-muted)' }}>Начните диалог!</p>
           </div>
         )}
         {messages.map(msg => {
@@ -197,26 +197,33 @@ function ChatWindow({ partnerId, currentUser }) {
           return (
             <div key={msg.id} className={`flex items-end gap-2 group ${mine ? 'flex-row-reverse' : ''}`}>
               {!mine && <Avatar user={msg.sender} size="sm" />}
-              <div className={`max-w-[70%] ${mine ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                <div className={`rounded-2xl px-4 py-2.5 text-sm ${mine
-                  ? 'bg-blue-600 text-white rounded-br-sm'
-                  : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-sm shadow-sm'}`}>
+              <div className={`max-w-[70%] flex flex-col gap-1 ${mine ? 'items-end' : 'items-start'}`}>
+                <div className="px-4 py-2.5 text-sm"
+                  style={{
+                    background: mine ? 'var(--accent)' : 'var(--bg-surface)',
+                    color: mine ? '#000' : 'var(--text-primary)',
+                    border: mine ? 'none' : '1px solid var(--border)',
+                    borderRadius: mine ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                  }}>
                   {msg.imageUrl && (
-                    <img src={msg.imageUrl} alt="фото" className="rounded-lg max-w-xs max-h-64 object-cover mb-1 cursor-pointer"
+                    <img src={msg.imageUrl} alt="фото"
+                      className="rounded-lg max-w-xs max-h-64 object-cover mb-1 cursor-pointer"
                       onClick={() => window.open(msg.imageUrl, '_blank')} />
                   )}
-                  {msg.text && <p className="break-words">{msg.text}</p>}
+                  {msg.text && <p className="break-words font-sans">{msg.text}</p>}
                 </div>
                 <div className={`flex items-center gap-1.5 ${mine ? 'flex-row-reverse' : ''}`}>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                  <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>
                     {new Date(msg.createdAt).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}
                   </span>
+                  {mine && <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>{msg.isRead ? '✓✓' : '✓'}</span>}
                   {mine && (
-                    <span className="text-xs text-gray-400">{msg.isRead ? '✓✓' : '✓'}</span>
-                  )}
-                  {mine && (
-                    <button onClick={() => deleteMsg(msg.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500">
-                      <Trash2 className="w-3 h-3" />
+                    <button onClick={() => deleteMsg(msg.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                     </button>
                   )}
                 </div>
@@ -227,27 +234,34 @@ function ChatWindow({ partnerId, currentUser }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Поле ввода */}
-      <form onSubmit={send} className="flex items-center gap-2 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      {/* Input */}
+      <form onSubmit={send} className="flex items-center gap-2 px-4 py-3"
+        style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
         <input type="file" accept="image/*" ref={fileInputRef} className="hidden"
           onChange={e => e.target.files[0] && sendImage(e.target.files[0])} />
-        <button type="button" onClick={() => fileInputRef.current?.click()}
-          disabled={uploadingImage}
-          className="p-2 text-gray-400 hover:text-blue-600 transition-colors shrink-0 disabled:opacity-50">
+        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}
+          className="shrink-0 p-2 transition-colors"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', opacity: uploadingImage ? 0.5 : 1 }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
           {uploadingImage
-            ? <span className="w-4 h-4 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin inline-block" />
-            : <ImageIcon className="w-5 h-5" />
-          }
+            ? <span className="w-5 h-5 border-2 rounded-full animate-spin inline-block" style={{ borderColor: 'var(--border-strong)', borderTopColor: 'var(--accent)' }} />
+            : <ImageIcon className="w-5 h-5" />}
         </button>
-        <input
-          type="text"
-          value={text}
-          onChange={e => setText(e.target.value)}
+        <input type="text" value={text} onChange={e => setText(e.target.value)}
           placeholder="Написать сообщение..."
-          className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          className="flex-1 font-sans text-sm px-4 py-2 focus:outline-none"
+          style={{
+            background: 'var(--bg-raised)', border: '1px solid var(--border-strong)',
+            color: 'var(--text-primary)', borderRadius: 2,
+          }} />
         <button type="submit" disabled={!text.trim() || sending}
-          className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-xl transition-colors shrink-0">
+          className="shrink-0 p-2.5 transition-all"
+          style={{
+            background: text.trim() && !sending ? 'var(--accent)' : 'var(--bg-raised)',
+            border: '1px solid var(--border-strong)', cursor: text.trim() ? 'pointer' : 'default',
+            color: text.trim() && !sending ? '#000' : 'var(--text-muted)',
+          }}>
           <Send className="w-4 h-4" />
         </button>
       </form>
@@ -273,41 +287,45 @@ export default function ChatPage() {
     navigate(`/chat/${id}`, { replace: true });
   };
 
-  // Если открыт конкретный диалог и его нет в списке — добавить позиционно
   const showChat = activeId;
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-5xl">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden flex h-[calc(100vh-10rem)] border border-gray-200 dark:border-gray-700">
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '24px 0 60px' }}>
+      <div className="container mx-auto px-4 max-w-5xl" style={{ height: 'calc(100vh - 10rem)' }}>
+        <div className="overflow-hidden flex h-full"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
 
-        {/* Левая панель — список диалогов */}
-        <div className={`w-80 shrink-0 border-r border-gray-200 dark:border-gray-700 flex flex-col ${showChat ? 'hidden md:flex' : 'flex w-full'}`}>
-          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Сообщения</h2>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <ConversationList conversations={conversations} activeId={activeId} onSelect={handleSelect} />
-          </div>
-        </div>
-
-        {/* Правая панель — чат */}
-        {showChat ? (
-          <div className="flex-1 flex flex-col min-w-0">
-            {/* Мобильная кнопка назад */}
-            <button onClick={() => { setActiveId(null); navigate('/chat'); }}
-              className="md:hidden flex items-center gap-1.5 px-4 py-2 text-sm text-blue-600 border-b border-gray-200 dark:border-gray-700">
-              <ArrowLeft className="w-4 h-4" /> Назад
-            </button>
-            <ChatWindow key={activeId} partnerId={activeId} currentUser={user} />
-          </div>
-        ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center">
-            <div className="text-center">
-              <MessageSquare className="w-16 h-16 text-gray-200 dark:text-gray-700 mx-auto mb-3" />
-              <p className="text-gray-400 dark:text-gray-500">Выберите диалог</p>
+          {/* Left panel */}
+          <div className={`w-72 shrink-0 flex flex-col ${showChat ? 'hidden md:flex' : 'flex w-full'}`}
+            style={{ borderRight: '1px solid var(--border)' }}>
+            <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <p className="font-mono text-[10px] tracking-widest uppercase mb-0.5" style={{ color: 'var(--accent)' }}>/ чат</p>
+              <h2 className="font-display tracking-widest text-lg" style={{ color: 'var(--text-primary)' }}>СООБЩЕНИЯ</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <ConversationList conversations={conversations} activeId={activeId} onSelect={handleSelect} />
             </div>
           </div>
-        )}
+
+          {/* Right panel */}
+          {showChat ? (
+            <div className="flex-1 flex flex-col min-w-0">
+              <button onClick={() => { setActiveId(null); navigate('/chat'); }}
+                className="md:hidden flex items-center gap-1.5 px-4 py-2 font-mono text-xs transition-colors"
+                style={{ borderBottom: '1px solid var(--border)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)' }}>
+                <ArrowLeft className="w-4 h-4" /> Назад
+              </button>
+              <ChatWindow key={activeId} partnerId={activeId} currentUser={user} />
+            </div>
+          ) : (
+            <div className="hidden md:flex flex-1 items-center justify-center">
+              <div className="text-center">
+                <MessageSquare className="w-16 h-16 mx-auto mb-3" style={{ color: 'var(--border-strong)' }} />
+                <p className="font-display tracking-widest text-xl" style={{ color: 'var(--text-muted)', WebkitTextStroke: '1px var(--border-strong)', WebkitTextFillColor: 'transparent' }}>ВЫБЕРИТЕ ДИАЛОГ</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
