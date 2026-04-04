@@ -3,18 +3,25 @@ import cloudinary from '../config/cloudinary.js';
 import { AppError } from '../utils/errors.js';
 
 /**
- * Загрузка изображения в Cloudinary
- * @param {string} filePath - Путь к файлу или base64 строка
+ * Загрузить изображение из Buffer в Cloudinary
+ * @param {Buffer} buffer - Буфер файла (из multer memoryStorage)
+ * @param {string} mimeType - MIME-тип ('image/jpeg', 'image/png' и т.д.)
  * @param {string} folder - Папка в Cloudinary
  * @param {Object} options - Дополнительные опции
- * @returns {Promise<Object>} - Результат загрузки
  */
-export const uploadImage = async (filePath, folder = '3d-print-lab', options = {}) => {
+export const uploadImageBuffer = async (buffer, mimeType, folder = '3d-print-lab/images', options = {}) => {
   try {
-    const result = await cloudinary.uploader.upload(filePath, {
+    const base64 = buffer.toString('base64');
+    const dataUri = `data:${mimeType};base64,${base64}`;
+
+    const result = await cloudinary.uploader.upload(dataUri, {
       folder,
-      resource_type: 'auto',
-      ...options
+      resource_type: 'image',
+      transformation: [
+        { quality: 'auto:good' },
+        { fetch_format: 'auto' },
+      ],
+      ...options,
     });
 
     return {
@@ -22,72 +29,31 @@ export const uploadImage = async (filePath, folder = '3d-print-lab', options = {
       publicId: result.public_id,
       format: result.format,
       width: result.width,
-      height: result.height
+      height: result.height,
     };
   } catch (error) {
-    console.error('Ошибка загрузки в Cloudinary:', error);
-    throw new AppError('Ошибка загрузки изображения', 500);
+    console.error('Cloudinary upload error:', error);
+    throw new AppError('Ошибка загрузки изображения в Cloudinary', 500);
   }
 };
 
 /**
- * Загрузка 3D модели в Cloudinary
- * @param {string} filePath - Путь к файлу
- * @param {string} folder - Папка в Cloudinary
- * @returns {Promise<Object>} - Результат загрузки
- */
-export const uploadModel = async (filePath, folder = '3d-print-lab/models') => {
-  try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      folder,
-      resource_type: 'raw', // Для 3D файлов
-      format: 'stl' // или автоопределение
-    });
-
-    return {
-      url: result.secure_url,
-      publicId: result.public_id,
-      format: result.format,
-      size: result.bytes
-    };
-  } catch (error) {
-    console.error('Ошибка загрузки модели в Cloudinary:', error);
-    throw new AppError('Ошибка загрузки 3D модели', 500);
-  }
-};
-
-/**
- * Удаление файла из Cloudinary
- * @param {string} publicId - Public ID файла в Cloudinary
- * @param {string} resourceType - Тип ресурса ('image', 'raw', 'video')
- * @returns {Promise<Object>} - Результат удаления
+ * Удалить файл из Cloudinary по publicId
  */
 export const deleteFile = async (publicId, resourceType = 'image') => {
   try {
-    const result = await cloudinary.uploader.destroy(publicId, {
-      resource_type: resourceType
-    });
-
-    return result;
+    return await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   } catch (error) {
-    console.error('Ошибка удаления из Cloudinary:', error);
-    throw new AppError('Ошибка удаления файла', 500);
+    console.error('Cloudinary delete error:', error);
+    throw new AppError('Ошибка удаления файла из Cloudinary', 500);
   }
 };
 
 /**
- * Загрузка нескольких изображений
- * @param {Array} files - Массив файлов
- * @param {string} folder - Папка в Cloudinary
- * @returns {Promise<Array>} - Массив результатов
+ * Загрузить несколько изображений из массива файлов multer
  */
-export const uploadMultipleImages = async (files, folder = '3d-print-lab') => {
-  try {
-    const uploadPromises = files.map(file => uploadImage(file.path, folder));
-    const results = await Promise.all(uploadPromises);
-    return results;
-  } catch (error) {
-    console.error('Ошибка загрузки нескольких изображений:', error);
-    throw new AppError('Ошибка загрузки изображений', 500);
-  }
+export const uploadMultipleBuffers = async (files, folder = '3d-print-lab/images') => {
+  return Promise.all(
+    files.map(file => uploadImageBuffer(file.buffer, file.mimetype, folder))
+  );
 };
