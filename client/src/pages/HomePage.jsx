@@ -210,14 +210,18 @@ export default function HomePage() {
 
             {/* Headline */}
             <h1
-              className={`font-display leading-[0.88] tracking-wider mb-10 transition-all ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
-              style={{ fontSize: 'clamp(64px, 13vw, 160px)', transitionDuration: '1s', transitionDelay: '0.3s', transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
+              className={`font-display leading-[0.9] tracking-widest mb-10 transition-all ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+              style={{ fontSize: 'clamp(52px, 10vw, 120px)', transitionDuration: '1s', transitionDelay: '0.3s', transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
             >
-              <span style={{ color: 'var(--text-primary)', display: 'block' }}>ТОЧНОСТЬ</span>
+              <span style={{
+                display: 'block',
+                WebkitTextStroke: '1px rgba(240,235,227,0.7)',
+                WebkitTextFillColor: 'transparent',
+              }}>ТОЧНОСТЬ</span>
               <span className="shimmer-text" style={{ display: 'block' }}>В КАЖДОМ</span>
               <span style={{
                 display: 'block',
-                WebkitTextStroke: '1.5px rgba(255,255,255,0.4)',
+                WebkitTextStroke: '1px rgba(255,77,0,0.5)',
                 WebkitTextFillColor: 'transparent',
               }}>ИЗДЕЛИИ</span>
             </h1>

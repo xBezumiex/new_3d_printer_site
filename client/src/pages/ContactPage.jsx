@@ -1,4 +1,3 @@
-// Страница контактов
 import { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -17,6 +16,14 @@ const HOURS = [
   { days: 'Воскресенье', time: 'Выходной' },
 ];
 
+const inputStyle = {
+  width: '100%', padding: '12px 14px',
+  background: 'var(--glass-bg)', border: '1px solid var(--border-strong)',
+  color: 'var(--text-primary)', fontSize: 14, outline: 'none',
+  fontFamily: 'DM Sans, sans-serif',
+  backdropFilter: 'blur(8px)',
+};
+
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [sent, setSent] = useState(false);
@@ -24,20 +31,15 @@ export default function ContactPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.message) {
-      toast.error('Заполните обязательные поля');
-      return;
-    }
+    if (!form.name || !form.email || !form.message) { toast.error('Заполните обязательные поля'); return; }
     setSending(true);
     try {
       const res = await fetch(`https://formsubmit.co/ajax/${YOUR_EMAIL}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone || 'не указан',
-          message: form.message,
+          name: form.name, email: form.email,
+          phone: form.phone || 'не указан', message: form.message,
           _subject: `Новое сообщение с сайта 3D Print Lab от ${form.name}`,
           _captcha: 'false',
         }),
@@ -46,45 +48,51 @@ export default function ContactPage() {
       if (data.success === 'true' || data.success === true) {
         setSent(true);
         toast.success('Сообщение отправлено!');
-      } else {
-        throw new Error('fail');
-      }
+      } else throw new Error('fail');
     } catch {
       toast.error('Не удалось отправить. Напишите напрямую на ' + YOUR_EMAIL);
-    } finally {
-      setSending(false);
-    }
+    } finally { setSending(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-      <div className="container mx-auto px-4 max-w-5xl">
-        {/* Заголовок */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">Контакты</h1>
-          <p className="text-gray-600 dark:text-gray-400">Есть вопросы? Напишите или позвоните — ответим быстро</p>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Header */}
+      <div style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', padding: '48px 0 32px' }}>
+        <div className="container mx-auto px-6">
+          <p className="font-mono text-xs tracking-widest2 uppercase mb-3" style={{ color: 'var(--accent)' }}>/ контакты</p>
+          <h1 className="font-display tracking-widest mb-3" style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'var(--text-primary)', lineHeight: 1 }}>
+            СВЯЗАТЬСЯ С НАМИ
+          </h1>
+          <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>Есть вопросы? Напишите или позвоните — ответим быстро</p>
         </div>
+      </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Левая колонка — info */}
-          <div className="space-y-6">
-            {/* Контактные данные */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Наши контакты</h2>
-              <div className="space-y-4">
+      <div className="container mx-auto px-6 py-12 max-w-5xl">
+        <div className="grid lg:grid-cols-2 gap-6">
+
+          {/* Left — info */}
+          <div className="space-y-4">
+            {/* Contacts */}
+            <div className="glass p-6">
+              <p className="font-mono text-[10px] tracking-widest2 uppercase mb-5" style={{ color: 'var(--text-muted)' }}>Контакты</p>
+              <div className="space-y-5">
                 {CONTACTS.map(({ icon: Icon, label, value, link }) => (
                   <div key={label} className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shrink-0">
-                      <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div className="w-9 h-9 flex items-center justify-center shrink-0"
+                      style={{ background: 'var(--accent-dim)', border: '1px solid rgba(255,77,0,0.2)' }}>
+                      <Icon className="w-4 h-4" style={{ color: 'var(--accent)' }} />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{label}</p>
+                      <p className="font-mono text-[10px] tracking-wider uppercase mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
                       {link ? (
-                        <a href={link} className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
+                        <a href={link} className="font-sans text-sm font-medium transition-colors duration-200"
+                          style={{ color: 'var(--text-primary)', textDecoration: 'none' }}
+                          onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}>
                           {value}
                         </a>
                       ) : (
-                        <p className="font-medium text-gray-900 dark:text-white">{value}</p>
+                        <p className="font-sans text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{value}</p>
                       )}
                     </div>
                   </div>
@@ -92,19 +100,21 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Режим работы */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            {/* Hours */}
+            <div className="glass p-6">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <div className="w-9 h-9 flex items-center justify-center"
+                  style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                  <Clock className="w-4 h-4" style={{ color: '#4ADE80' }} />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Режим работы</h2>
+                <p className="font-mono text-[10px] tracking-widest2 uppercase" style={{ color: 'var(--text-muted)' }}>Режим работы</p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-0">
                 {HOURS.map(({ days, time }) => (
-                  <div key={days} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                    <span className="text-gray-600 dark:text-gray-400">{days}</span>
-                    <span className={`font-semibold ${time === 'Выходной' ? 'text-red-500' : 'text-gray-900 dark:text-white'}`}>
+                  <div key={days} className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>{days}</span>
+                    <span className="font-mono text-sm font-medium"
+                      style={{ color: time === 'Выходной' ? '#f87171' : 'var(--text-primary)' }}>
                       {time}
                     </span>
                   </div>
@@ -112,101 +122,83 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Карта (заглушка) */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-              <div className="h-52 bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-900/30 dark:to-indigo-900/30 flex flex-col items-center justify-center text-center p-6">
-                <MapPin className="w-10 h-10 text-blue-500 mb-2" />
-                <p className="font-semibold text-gray-900 dark:text-white">г. Москва, ул. Мастеров, д. 12</p>
-                <a
-                  href="https://yandex.ru/maps/?text=Москва,+ул+Мастеров+12"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-                >
+            {/* Map placeholder */}
+            <div className="glass overflow-hidden">
+              <div className="h-48 flex flex-col items-center justify-center text-center p-6 relative"
+                style={{ background: 'linear-gradient(135deg, rgba(79,142,247,0.06), rgba(255,77,0,0.04))' }}>
+                <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, rgba(79,142,247,0.08) 0%, transparent 70%)' }} />
+                <MapPin className="w-8 h-8 mb-2 relative z-10" style={{ color: 'var(--accent)' }} />
+                <p className="font-sans text-sm font-medium mb-3 relative z-10" style={{ color: 'var(--text-primary)' }}>
+                  г. Москва, ул. Мастеров, д. 12
+                </p>
+                <a href="https://yandex.ru/maps/?text=Москва,+ул+Мастеров+12"
+                  target="_blank" rel="noopener noreferrer"
+                  className="relative z-10 font-mono text-xs tracking-wider uppercase px-4 py-2 transition-colors"
+                  style={{ background: 'var(--accent)', color: '#000' }}>
                   Открыть на карте
                 </a>
               </div>
             </div>
           </div>
 
-          {/* Правая колонка — форма */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+          {/* Right — form */}
+          <div className="glass p-6">
             {sent ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-12 gap-4">
-                <CheckCircle className="w-16 h-16 text-green-500" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Сообщение отправлено!</h3>
-                <p className="text-gray-500 dark:text-gray-400">Мы ответим вам в течение рабочего дня</p>
-                <button
-                  onClick={() => { setSent(false); setForm({ name: '', email: '', phone: '', message: '' }); }}
-                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-                >
+              <div className="h-full flex flex-col items-center justify-center text-center py-12 gap-5">
+                <CheckCircle className="w-14 h-14" style={{ color: '#4ADE80' }} />
+                <div>
+                  <h3 className="font-display tracking-widest text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>
+                    ОТПРАВЛЕНО
+                  </h3>
+                  <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    Мы ответим в течение рабочего дня
+                  </p>
+                </div>
+                <button onClick={() => { setSent(false); setForm({ name: '', email: '', phone: '', message: '' }); }}
+                  className="font-mono text-xs tracking-wider uppercase px-6 py-3 transition-colors"
+                  style={{ background: 'var(--glass-bg)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)' }}>
                   Отправить ещё
                 </button>
               </div>
             ) : (
               <>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Написать нам</h2>
+                <p className="font-mono text-[10px] tracking-widest2 uppercase mb-6" style={{ color: 'var(--text-muted)' }}>Написать нам</p>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {[
+                    { key: 'name', label: 'Имя', type: 'text', placeholder: 'Ваше имя', required: true },
+                    { key: 'email', label: 'Email', type: 'email', placeholder: 'your@email.com', required: true },
+                    { key: 'phone', label: 'Телефон', type: 'tel', placeholder: '+7 (___) ___-__-__', required: false },
+                  ].map(({ key, label, type, placeholder, required }) => (
+                    <div key={key}>
+                      <label className="font-mono text-[10px] tracking-wider uppercase block mb-2" style={{ color: 'var(--text-muted)' }}>
+                        {label} {required && <span style={{ color: 'var(--accent)' }}>*</span>}
+                      </label>
+                      <input type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                        placeholder={placeholder} style={inputStyle}
+                        onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                        onBlur={e => e.target.style.borderColor = 'var(--border-strong)'} />
+                    </div>
+                  ))}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Имя <span className="text-red-500">*</span>
+                    <label className="font-mono text-[10px] tracking-wider uppercase block mb-2" style={{ color: 'var(--text-muted)' }}>
+                      Сообщение <span style={{ color: 'var(--accent)' }}>*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={form.name}
-                      onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder="Ваше имя"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Email <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                      placeholder="your@email.com"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Телефон
-                    </label>
-                    <input
-                      type="tel"
-                      value={form.phone}
-                      onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                      placeholder="+7 (___) ___-__-__"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Сообщение <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      rows={5}
-                      value={form.message}
-                      onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                    <textarea rows={5} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                       placeholder="Опишите ваш вопрос или задачу..."
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                    />
+                      style={{ ...inputStyle, resize: 'none' }}
+                      onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                      onBlur={e => e.target.style.borderColor = 'var(--border-strong)'} />
                   </div>
-                  <button
-                    type="submit"
-                    disabled={sending}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition disabled:opacity-60"
-                  >
+                  <button type="submit" disabled={sending}
+                    className="w-full py-3 font-sans font-semibold flex items-center justify-center gap-2 transition-opacity disabled:opacity-60"
+                    style={{ background: 'var(--accent)', color: '#000' }}>
                     {sending ? (
-                      <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Отправляем...</>
+                      <><div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(0,0,0,0.2)', borderTopColor: '#000' }} /> Отправляем...</>
                     ) : (
-                      <><Send className="w-5 h-5" /> Отправить сообщение</>
+                      <><Send className="w-4 h-4" /> Отправить сообщение</>
                     )}
                   </button>
-                  <p className="text-xs text-gray-400 text-center">
+                  <p className="font-mono text-[10px] text-center" style={{ color: 'var(--text-muted)' }}>
                     Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
                   </p>
                 </form>
