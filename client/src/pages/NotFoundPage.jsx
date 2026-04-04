@@ -1,27 +1,16 @@
-// Страница 404
 import { Link, useNavigate } from 'react-router-dom';
 import { Home, Upload, Calculator, BookOpen, Image, HelpCircle, Mail, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const LINKS = [
-  { to: '/',           icon: Home,       label: 'Главная',         color: 'blue' },
-  { to: '/upload',     icon: Upload,     label: 'Загрузить модель', color: 'purple' },
-  { to: '/calculator', icon: Calculator, label: 'Калькулятор',     color: 'green' },
-  { to: '/posts',      icon: Image,      label: 'Галерея работ',   color: 'pink' },
-  { to: '/courses',    icon: BookOpen,   label: 'Курсы',           color: 'yellow' },
-  { to: '/faq',        icon: HelpCircle, label: 'FAQ',             color: 'orange' },
-  { to: '/contact',    icon: Mail,       label: 'Контакты',        color: 'teal' },
+  { to: '/',           icon: Home,       label: 'Главная',          color: '#4F8EF7' },
+  { to: '/upload',     icon: Upload,     label: 'Загрузить модель', color: '#C084FC' },
+  { to: '/calculator', icon: Calculator, label: 'Калькулятор',      color: '#4ADE80' },
+  { to: '/posts',      icon: Image,      label: 'Галерея работ',    color: '#FF4D00' },
+  { to: '/courses',    icon: BookOpen,   label: 'Курсы',            color: '#FACC15' },
+  { to: '/faq',        icon: HelpCircle, label: 'FAQ',              color: '#38BDF8' },
+  { to: '/contact',    icon: Mail,       label: 'Контакты',         color: '#FB923C' },
 ];
-
-const COLOR_MAP = {
-  blue:   'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:border-blue-400',
-  purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:border-purple-400',
-  green:  'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 hover:border-green-400',
-  pink:   'bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 border-pink-200 dark:border-pink-800 hover:border-pink-400',
-  yellow: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800 hover:border-yellow-400',
-  orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 hover:border-orange-400',
-  teal:   'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800 hover:border-teal-400',
-};
 
 export default function NotFoundPage() {
   const navigate = useNavigate();
@@ -37,48 +26,68 @@ export default function NotFoundPage() {
   }, [count, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
-      <div className="text-center max-w-2xl w-full">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 mesh-bg grid-overlay" style={{ background: 'var(--bg)' }}>
+      {/* Ambient glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(255,77,0,0.07) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+      </div>
 
-        {/* Анимированная цифра */}
-        <div className="relative mb-6 select-none">
-          <div className="text-[9rem] sm:text-[12rem] font-black leading-none text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-purple-600 opacity-20 dark:opacity-10">
+      <div className="text-center max-w-2xl w-full relative z-10">
+        {/* 404 */}
+        <div className="relative mb-8 select-none">
+          <p className="font-display leading-none" style={{
+            fontSize: 'clamp(8rem,20vw,14rem)',
+            WebkitTextStroke: '1px rgba(255,77,0,0.2)',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '0.05em',
+          }}>
             404
-          </div>
+          </p>
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <div className="text-6xl">🖨️</div>
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-6 py-3 shadow-lg">
-              <p className="text-xl font-bold text-gray-900 dark:text-white">Страница не найдена</p>
+            <div className="glass px-6 py-3">
+              <p className="font-display tracking-widest text-xl" style={{ color: 'var(--text-primary)' }}>
+                СТРАНИЦА НЕ НАЙДЕНА
+              </p>
             </div>
           </div>
         </div>
 
-        <p className="text-gray-500 dark:text-gray-400 mb-2">
+        <p className="font-sans text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
           Запрашиваемая страница не существует или была перемещена.
         </p>
-        <p className="text-sm text-gray-400 dark:text-gray-500 mb-8">
-          Автоматический переход на главную через <span className="text-blue-500 font-semibold">{count}</span> сек.
+        <p className="font-mono text-xs mb-10" style={{ color: 'var(--text-muted)' }}>
+          Переход на главную через <span style={{ color: 'var(--accent)' }}>{count}</span> сек.
         </p>
 
-        {/* Быстрые ссылки */}
+        {/* Quick links */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {LINKS.map(({ to, icon: Icon, label, color }) => (
             <Link key={to} to={to}
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${COLOR_MAP[color]}`}>
-              <Icon className="w-6 h-6" />
-              <span className="text-xs font-semibold text-center leading-tight">{label}</span>
+              className="glass glass-hover flex flex-col items-center gap-2 p-4 transition-all duration-200 group">
+              <Icon className="w-5 h-5 transition-colors duration-200"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={e => e.currentTarget.style.color = color}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              />
+              <span className="font-mono text-[10px] tracking-wider text-center leading-tight"
+                style={{ color: 'var(--text-secondary)' }}>
+                {label}
+              </span>
             </Link>
           ))}
         </div>
 
-        {/* Кнопки */}
+        {/* Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition font-medium">
+            className="glass btn-ghost inline-flex items-center gap-2 px-6 py-3 font-sans font-medium transition-colors"
+            style={{ border: '1px solid var(--border-strong)', color: 'var(--text-secondary)' }}>
             <ArrowLeft className="w-4 h-4" /> Назад
           </button>
           <Link to="/"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition shadow-md">
+            className="btn-primary inline-flex items-center gap-2 px-8 py-3 font-sans font-semibold"
+            style={{ background: 'var(--accent)', color: '#000' }}>
             <Home className="w-4 h-4" /> На главную
           </Link>
         </div>
