@@ -84,7 +84,7 @@ export default function MaterialsPage() {
   const mat = selected ? MATERIALS.find(m => m.id === selected) : null;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '60px 24px 80px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: 'clamp(32px,6vw,60px) clamp(16px,4vw,24px) 80px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
         {/* Page header */}
@@ -142,13 +142,13 @@ export default function MaterialsPage() {
           >
             {/* Card header */}
             <div style={{
-              padding: '32px 32px 28px',
+              padding: 'clamp(16px,4vw,32px) clamp(16px,4vw,32px) clamp(14px,3vw,28px)',
               background: `linear-gradient(135deg, ${mat.color}15, transparent)`,
               borderBottom: `1px solid ${mat.color}20`,
               display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16,
             }}>
               <div>
-                <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 56, letterSpacing: '0.05em', color: mat.color, lineHeight: 1, marginBottom: 4 }}>{mat.name}</h2>
+                <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(2.5rem,8vw,3.5rem)', letterSpacing: '0.05em', color: mat.color, lineHeight: 1, marginBottom: 4 }}>{mat.name}</h2>
                 <p style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.12em', marginBottom: 8 }}>{mat.fullName}</p>
                 <p style={{ fontSize: 16, color: 'var(--text-1)', fontWeight: 500 }}>{mat.tagline}</p>
               </div>
@@ -164,7 +164,7 @@ export default function MaterialsPage() {
               </span>
             </div>
 
-            <div style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 28 }}>
+            <div style={{ padding: 'clamp(16px,3vw,28px) clamp(16px,4vw,32px)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,240px),1fr))', gap: 'clamp(16px,3vw,28px)' }}>
               {/* Description */}
               <div style={{ gridColumn: '1 / -1' }}>
                 <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.8 }}>{mat.description}</p>
@@ -232,7 +232,7 @@ export default function MaterialsPage() {
                 <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 16 }}>
                   / Характеристики
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,180px),1fr))', gap: 10 }}>
                   {Object.entries(RATING_LABELS).map(([key, label]) => (
                     <div key={key}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>

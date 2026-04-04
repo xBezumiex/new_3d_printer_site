@@ -1,4 +1,3 @@
-// Кнопка подписки/отписки
 import { useState, useEffect } from 'react';
 import { UserPlus, UserMinus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -12,27 +11,16 @@ export default function SubscribeButton({ userId, onSubscriptionChange }) {
 
   useEffect(() => {
     if (isAuthenticated && currentUser?.id !== userId) {
-      checkFollowingStatus();
+      subscriptionsApi.checkFollowing(userId)
+        .then(r => setIsFollowing(r.data.isFollowing))
+        .catch(() => {});
     }
   }, [userId, isAuthenticated, currentUser]);
 
-  const checkFollowingStatus = async () => {
-    try {
-      const response = await subscriptionsApi.checkFollowing(userId);
-      setIsFollowing(response.data.isFollowing);
-    } catch (error) {
-      console.error('Ошибка проверки статуса подписки:', error);
-    }
-  };
+  if (!isAuthenticated || currentUser?.id === userId) return null;
 
-  const handleToggleSubscribe = async () => {
-    if (!isAuthenticated) {
-      toast.error('Войдите, чтобы подписаться');
-      return;
-    }
-
+  const handleToggle = async () => {
     setIsLoading(true);
-
     try {
       if (isFollowing) {
         await subscriptionsApi.unsubscribe(userId);
@@ -43,44 +31,32 @@ export default function SubscribeButton({ userId, onSubscriptionChange }) {
         setIsFollowing(true);
         toast.success('Вы подписались');
       }
-
-      // Уведомить родительский компонент
-      if (onSubscriptionChange) {
-        onSubscriptionChange();
-      }
-    } catch (error) {
-      console.error('Ошибка подписки:', error);
-      toast.error(error.response?.data?.message || 'Не удалось изменить подписку');
+      if (onSubscriptionChange) onSubscriptionChange();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Не удалось изменить подписку');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Не показывать кнопку для своего профиля
-  if (!isAuthenticated || currentUser?.id === userId) {
-    return null;
-  }
-
   return (
     <button
-      onClick={handleToggleSubscribe}
+      onClick={handleToggle}
       disabled={isLoading}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${
-        isFollowing
-          ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-          : 'bg-blue-600 hover:bg-blue-700 text-white'
-      }`}
+      className="flex items-center gap-2 font-sans text-sm font-medium transition-all"
+      style={{
+        padding: '8px 14px', cursor: isLoading ? 'not-allowed' : 'pointer',
+        opacity: isLoading ? 0.6 : 1,
+        background: isFollowing ? 'var(--glass-bg)' : 'var(--accent)',
+        color: isFollowing ? 'var(--text-secondary)' : '#000',
+        border: isFollowing ? '1px solid var(--border-strong)' : 'none',
+        backdropFilter: isFollowing ? 'blur(8px)' : 'none',
+      }}
     >
       {isFollowing ? (
-        <>
-          <UserMinus className="w-4 h-4" />
-          {isLoading ? 'Отписка...' : 'Отписаться'}
-        </>
+        <><UserMinus className="w-4 h-4" />{isLoading ? '...' : 'Отписаться'}</>
       ) : (
-        <>
-          <UserPlus className="w-4 h-4" />
-          {isLoading ? 'Подписка...' : 'Подписаться'}
-        </>
+        <><UserPlus className="w-4 h-4" />{isLoading ? '...' : 'Подписаться'}</>
       )}
     </button>
   );

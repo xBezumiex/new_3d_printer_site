@@ -2,7 +2,7 @@ import PriceCalculator from '../components/calculator/PriceCalculator';
 
 export default function CalculatorPage() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '60px 24px 80px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: 'clamp(32px,6vw,60px) clamp(16px,4vw,24px) 80px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
