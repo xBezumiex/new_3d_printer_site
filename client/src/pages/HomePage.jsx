@@ -210,8 +210,8 @@ export default function HomePage() {
 
             {/* Headline */}
             <h1
-              className={`font-display leading-[0.9] tracking-widest mb-10 transition-all ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
-              style={{ fontSize: 'clamp(52px, 10vw, 120px)', transitionDuration: '1s', transitionDelay: '0.3s', transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
+              className={`font-display tracking-widest mb-10 transition-all ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+              style={{ fontSize: 'clamp(52px, 10vw, 120px)', lineHeight: 1.05, transitionDuration: '1s', transitionDelay: '0.3s', transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
             >
               <span style={{
                 display: 'block',
