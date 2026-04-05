@@ -20,7 +20,13 @@ export const validate = (schema, source = 'body') => {
     }
 
     if (source === 'query') {
-      req.query = value;
+      // req.query — getter-only в Express 4 (ES modules/strict mode), нельзя присвоить напрямую
+      Object.defineProperty(req, 'query', {
+        value,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      });
     } else {
       req.body = value;
     }
