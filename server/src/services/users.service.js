@@ -66,6 +66,7 @@ export const getUserById = async (userId) => {
       bio: true,
       phone: true,
       role: true,
+      lastActivity: true,
       createdAt: true,
       _count: {
         select: {

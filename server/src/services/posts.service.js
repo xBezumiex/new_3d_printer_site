@@ -56,12 +56,16 @@ export const getPosts = async (query = {}) => {
 
   if (tag) where.tags = { has: tag };
 
+  const SORT_FIELD_MAP = { likes: 'likes', views: 'views', createdAt: 'createdAt' };
+  const sortField = SORT_FIELD_MAP[sort] || 'createdAt';
+  const sortDir = order === 'asc' ? 'asc' : 'desc';
+
   const [posts, total] = await Promise.all([
     prisma.post.findMany({
       where,
       skip,
       take: parseInt(limit),
-      orderBy: { createdAt: 'desc' },
+      orderBy: { [sortField]: sortDir },
       include: {
         user: {
           select: {

@@ -11,7 +11,9 @@ export const corsOptions = {
     // Разрешить запросы без origin (мобильные приложения, Postman, curl)
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} не разрешён`));
+    const err = new Error(`CORS: origin ${origin} не разрешён`);
+    err.statusCode = 403;
+    callback(err);
   },
   credentials: true,
   optionsSuccessStatus: 200,

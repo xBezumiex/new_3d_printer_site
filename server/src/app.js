@@ -63,7 +63,7 @@ if (process.env.NODE_ENV === 'development') {
 // Rate limiting (общий лимит)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 минут
-  max: 100, // макс 100 запросов с одного IP
+  max: 500, // макс 500 запросов с одного IP
   message: 'Слишком много запросов с этого IP, попробуйте позже',
   standardHeaders: true,
   legacyHeaders: false,
