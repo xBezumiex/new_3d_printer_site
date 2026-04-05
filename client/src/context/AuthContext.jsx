@@ -34,8 +34,21 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.user);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('Ошибка загрузки пользователя:', error);
-      logout();
+      // Сетевая ошибка (сервер спит / нет интернета) — не разлогиниваем,
+      // сохраняем кешированного пользователя из localStorage
+      const isNetworkError = !error.status || error.status === 0;
+      if (isNetworkError) {
+        const cached = localStorage.getItem('user');
+        if (cached) {
+          try {
+            setUser(JSON.parse(cached));
+            setIsAuthenticated(true);
+          } catch {}
+        }
+      } else {
+        // 401/403 — токен невалиден, разлогиниваем
+        logout();
+      }
     } finally {
       setIsLoading(false);
     }
