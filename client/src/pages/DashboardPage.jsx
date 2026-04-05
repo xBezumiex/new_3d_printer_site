@@ -101,7 +101,7 @@ export default function DashboardPage() {
       setOrders(data.data.orders || []);
       setPagination(data.data.pagination || null);
     } catch (err) {
-      toast.error(err?.message || 'Не удалось загрузить заказы');
+      if (err?.status !== 0) toast.error(err?.message || 'Не удалось загрузить заказы');
     } finally { setIsLoading(false); }
   };
 

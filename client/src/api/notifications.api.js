@@ -5,7 +5,7 @@ export const getNotifications = async (page = 1) => {
   return r.data;
 };
 export const getUnreadCount = async () => {
-  const r = await axiosInstance.get('/notifications/unread');
+  const r = await axiosInstance.get('/notifications/unread', { _noRetry: true });
   return r.data;
 };
 export const markOneRead = async (id) => {

@@ -74,7 +74,7 @@ export default function ProfilePage() {
     try {
       const response = await usersApi.getUserById(userId);
       setProfileUser(response.data?.user || response.data);
-    } catch { toast.error('Не удалось загрузить профиль'); }
+    } catch (err) { if (err?.status !== 0) toast.error('Не удалось загрузить профиль'); }
     finally { setIsLoading(false); }
   };
 

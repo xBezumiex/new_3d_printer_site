@@ -54,8 +54,8 @@ export default function PostList({ userId, searchQuery, sort = 'newest', tag = '
       const data = response.data?.data || response.data;
       setPosts(data.posts || []);
       setPagination({ total: data.pagination?.total || 0, pages: data.pagination?.pages || 0 });
-    } catch {
-      toast.error('Не удалось загрузить посты');
+    } catch (err) {
+      if (err?.status !== 0) toast.error('Не удалось загрузить посты');
     } finally {
       setIsLoading(false);
     }

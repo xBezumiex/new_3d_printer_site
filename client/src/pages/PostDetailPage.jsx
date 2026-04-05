@@ -18,9 +18,8 @@ export default function PostDetailPage() {
     try {
       const response = await postsApi.getPostById(id);
       setPost(response.data.data.post);
-    } catch {
-      toast.error('Не удалось загрузить пост');
-      navigate('/posts');
+    } catch (err) {
+      if (err?.status !== 0) { toast.error('Не удалось загрузить пост'); navigate('/posts'); }
     } finally { setIsLoading(false); }
   };
 

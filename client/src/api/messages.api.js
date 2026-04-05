@@ -21,6 +21,6 @@ export const deleteMessage = async (messageId) => {
 };
 
 export const getUnreadCount = async () => {
-  const r = await axiosInstance.get('/messages/unread');
+  const r = await axiosInstance.get('/messages/unread', { _noRetry: true });
   return r.data;
 };
