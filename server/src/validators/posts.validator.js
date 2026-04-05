@@ -37,4 +37,7 @@ export const getPostsQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(10),
   userId: Joi.string().uuid(),
   search: Joi.string().max(200),
+  sort: Joi.string().valid('likes', 'createdAt', 'views').optional(),
+  order: Joi.string().valid('asc', 'desc').optional(),
+  tag: Joi.string().max(50).optional(),
 });
