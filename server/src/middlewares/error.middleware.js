@@ -23,10 +23,9 @@ export const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
-  // Логирование ошибок
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Error:', err);
-  }
+  // Логирование ошибок (всегда, чтобы видеть ошибки на Render)
+  console.error(`[${new Date().toISOString()}] ERROR ${req.method} ${req.url}:`, err.message);
+  if (err.stack) console.error(err.stack);
 
   // Prisma ошибки
   if (err.code && err.code.startsWith('P')) {

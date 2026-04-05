@@ -1,8 +1,7 @@
 // Отдача изображений из PostgreSQL
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/database.js';
 
-const prisma = new PrismaClient();
 const router = express.Router();
 
 // GET /api/images/:id
