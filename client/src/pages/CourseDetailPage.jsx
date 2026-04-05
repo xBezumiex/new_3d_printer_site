@@ -32,9 +32,8 @@ export default function CourseDetailPage() {
     try {
       const response = await coursesApi.getCourseById(id);
       setCourse(response.data.data.course);
-    } catch {
-      toast.error('Не удалось загрузить курс');
-      navigate('/courses');
+    } catch (err) {
+      if (err?.status !== 0) { toast.error('Не удалось загрузить курс'); navigate('/courses'); }
     } finally { setIsLoading(false); }
   };
 

@@ -21,7 +21,7 @@ export default function SearchPage() {
     try {
       const response = await searchApi.search(query, activeTab, 20);
       setResults(response.data.data || { posts: [], users: [], total: 0 });
-    } catch { toast.error('Не удалось выполнить поиск'); }
+    } catch (err) { if (err?.status !== 0) toast.error('Не удалось выполнить поиск'); }
     finally { setIsLoading(false); }
   };
 
