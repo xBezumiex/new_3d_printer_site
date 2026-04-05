@@ -103,13 +103,25 @@ export default function Header() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+
     const load = () => {
+      // Не опрашиваем когда нет интернета — иначе консоль засоряется ERR_INTERNET_DISCONNECTED
+      if (!navigator.onLine) return;
       getUnreadMessages().then(r => setUnreadMessages(r.data?.count || 0)).catch(() => {});
       getUnreadNotifs().then(r => setUnreadNotifs(r.data?.count || 0)).catch(() => {});
     };
+
     load();
     const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
+
+    // При восстановлении сети — сразу загружаем счётчики
+    const handleOnline = () => load();
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+    };
   }, [isAuthenticated]);
 
   const close = () => setMobileOpen(false);
