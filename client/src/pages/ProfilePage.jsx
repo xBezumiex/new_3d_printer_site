@@ -143,7 +143,10 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="shrink-0">
               {isOwnProfile ? (
-                <AvatarUpload user={profileUser} onUpdate={setProfileUser} />
+                <AvatarUpload
+                  user={profileUser}
+                  onUpdate={(updatedUser) => setProfileUser(prev => ({ ...prev, ...updatedUser }))}
+                />
               ) : (
                 <div className="w-24 h-24 overflow-hidden flex items-center justify-center font-display text-4xl"
                   style={{ background: 'linear-gradient(135deg, rgba(255,77,0,0.3), rgba(79,142,247,0.3))', border: '1px solid var(--border-strong)', color: 'var(--text-primary)' }}>
