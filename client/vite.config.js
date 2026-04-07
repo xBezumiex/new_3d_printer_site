@@ -12,27 +12,10 @@ export default defineConfig({
       base,
       // Кешируем все JS/CSS чанки при первом посещении
       workbox: {
+        // Кешируем только статику — JS/CSS/HTML/шрифты/иконки
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
-        // Стратегия для чанков — сначала кеш, потом сеть
-        runtimeCaching: [
-          {
-            urlPattern: /\/assets\/.+\.(js|css)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'app-chunks',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/threed-print-lab-api\.onrender\.com\/api\//,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
-            },
-          },
-        ],
+        // API-запросы НЕ кешируем через SW — axios сам управляет ретраями
+        runtimeCaching: [],
       },
       manifest: {
         name: '3D Print Lab',
