@@ -51,13 +51,19 @@ export const ModelProvider = ({ children }) => {
     setModelLoaded(true);
     setLoadError(null);
 
-    // Обновляем объем и вес из данных модели
-    if (data.volume && data.weight) {
-      setCalcParams((prev) => ({
-        ...prev,
-        volume: data.volume,
-        weight: data.weight
-      }));
+    // Пересчитываем вес используя текущий материал и заполнение
+    if (data.volume) {
+      setCalcParams((prev) => {
+        const material = materials[prev.material] || materials.PLA;
+        const volume = parseFloat(data.volume) || 0;
+        const infillFactor = prev.infill / 100;
+        const weight = volume * material.density * infillFactor;
+        return {
+          ...prev,
+          volume: data.volume,
+          weight: Math.max(0.01, weight).toFixed(2),
+        };
+      });
     }
   };
 
