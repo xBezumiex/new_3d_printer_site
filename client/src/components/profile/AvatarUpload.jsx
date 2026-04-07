@@ -52,7 +52,7 @@ export default function AvatarUpload({ user, onUpdate }) {
           color: 'var(--text-primary)',
         }}>
         {user.avatar
-          ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+          ? <img key={user.avatar} src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
           : user.name?.[0]?.toUpperCase() || '?'
         }
 

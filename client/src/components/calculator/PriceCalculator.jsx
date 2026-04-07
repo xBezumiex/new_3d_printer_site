@@ -170,6 +170,7 @@ export default function PriceCalculator() {
               const pct = ((calcParams.infill - 10) / 90) * 100;
               return {
                 background: `linear-gradient(to right, var(--accent) ${pct}%, var(--border-strong) ${pct}%)`,
+                borderRadius: '99px',
               };
             })()}
           />

@@ -47,8 +47,8 @@ function StaticCourseCard({ course }) {
         style={{ background: `linear-gradient(135deg, ${color}12, ${color}06)`, borderBottom: '1px solid var(--border)' }}>
         <BookOpen className="w-14 h-14" style={{ color: `${color}30` }} />
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${color}08 0%, transparent 70%)` }} />
-        <span className="glass absolute top-3 right-3 font-mono text-[10px] tracking-wider px-3 py-1"
-          style={{ color: 'var(--text-muted)' }}>
+        <span className="absolute top-3 right-3 font-mono text-[10px] tracking-wider px-3 py-1"
+          style={{ background: 'rgba(0,0,0,0.55)', color: '#fff', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4 }}>
           Скоро доступен
         </span>
       </div>
