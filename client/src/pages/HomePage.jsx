@@ -186,14 +186,14 @@ export default function HomePage() {
         <div className="absolute bottom-6 right-6 w-10 h-10 border-r-2 border-b-2 border-[var(--accent)] opacity-30 animate-fade-in delay-700" />
 
         {/* Status badge */}
-        <div className={`absolute top-8 left-1/2 -translate-x-1/2 transition-all duration-700 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
+        <div className={`absolute top-8 left-1/2 -translate-x-1/2 transition-all duration-700 w-max max-w-[calc(100vw-32px)] ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
           style={{ transitionDelay: '0.1s' }}>
-          <div className="glass flex items-center gap-3 px-5 py-2.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse-dot" />
-            <span className="font-mono text-[11px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
-              Профессиональная 3D-печать · Москва
+          <div className="glass flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 rounded-full">
+            <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-[var(--accent)] animate-pulse-dot" />
+            <span className="font-mono text-[10px] sm:text-[11px] tracking-widest uppercase whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+              3D-печать · Москва
             </span>
-            <span className="font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>2019–{new Date().getFullYear()}</span>
+            <span className="hidden sm:inline font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>2019–{new Date().getFullYear()}</span>
           </div>
         </div>
 
@@ -235,7 +235,7 @@ export default function HomePage() {
                 Быстро, точно, по честной цене.
               </p>
 
-              <div className="flex items-center gap-4 lg:ml-auto">
+              <div className="flex flex-wrap items-center gap-4 lg:ml-auto">
                 <Link to="/upload"
                   className="btn-primary group flex items-center gap-3 px-8 py-4 font-sans font-semibold"
                   style={{ background: 'var(--accent)', color: 'var(--bg)' }}>
@@ -300,7 +300,7 @@ function StatsSection() {
           {STATS.map((s, i) => (
             <div
               key={s.label}
-              className="px-8 py-10 text-center transition-all duration-700 relative group"
+              className="stats-cell px-8 py-10 text-center transition-all duration-700 relative group"
               style={{
                 borderRight: i < 3 ? '1px solid var(--border)' : 'none',
                 opacity: visible ? 1 : 0,

@@ -40,8 +40,8 @@ function OrderCard({ order }) {
             <p className="font-mono text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{formatDate(order.createdAt)}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 ml-4 shrink-0">
-          <span className="font-mono text-[11px] px-2 py-1 tracking-wider"
+        <div className="flex items-center gap-2 ml-3 shrink-0">
+          <span className="hidden sm:inline font-mono text-[11px] px-2 py-1 tracking-wider"
             style={{ background: status.bg, color: status.color, border: `1px solid ${status.border}` }}>
             {status.label}
           </span>
@@ -49,7 +49,7 @@ function OrderCard({ order }) {
             {Number(order.price).toLocaleString('ru-RU')} ₽
           </span>
           <Link to={`/orders/${order.id}`} onClick={e => e.stopPropagation()}
-            className="font-mono text-[11px] px-2 py-1 tracking-wider transition-colors"
+            className="hidden sm:inline font-mono text-[11px] px-2 py-1 tracking-wider transition-colors"
             style={{ background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid rgba(255,77,0,0.2)' }}>
             Трекинг →
           </Link>
@@ -59,26 +59,39 @@ function OrderCard({ order }) {
       </div>
 
       {expanded && (
-        <div className="px-4 pb-4 pt-3 grid grid-cols-2 md:grid-cols-3 gap-4" style={{ borderTop: '1px solid var(--border)' }}>
-          {[
-            ['Материал', MATERIAL_LABELS[order.material] || order.material],
-            ['Качество', QUALITY_LABELS[order.quality] || order.quality],
-            ['Заполнение', `${order.infill}%`],
-            ['Количество', `${order.quantity} шт.`],
-            ['Объём', `${order.volume} см³`],
-            ['Вес', `${order.weight} г`],
-          ].map(([label, val]) => (
-            <div key={label}>
-              <p className="font-mono text-[10px] tracking-wider uppercase mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
-              <p className="font-sans text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{val}</p>
-            </div>
-          ))}
-          {order.comments && (
-            <div className="col-span-2 md:col-span-3">
-              <p className="font-mono text-[10px] tracking-wider uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Комментарий</p>
-              <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>{order.comments}</p>
-            </div>
-          )}
+        <div className="px-4 pb-4 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="sm:hidden flex items-center gap-3 mb-3 flex-wrap">
+            <span className="font-mono text-[11px] px-2 py-1 tracking-wider"
+              style={{ background: status.bg, color: status.color, border: `1px solid ${status.border}` }}>
+              {status.label}
+            </span>
+            <Link to={`/orders/${order.id}`} onClick={e => e.stopPropagation()}
+              className="font-mono text-[11px] px-2 py-1 tracking-wider"
+              style={{ background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid rgba(255,77,0,0.2)' }}>
+              Трекинг →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              ['Материал', MATERIAL_LABELS[order.material] || order.material],
+              ['Качество', QUALITY_LABELS[order.quality] || order.quality],
+              ['Заполнение', `${order.infill}%`],
+              ['Количество', `${order.quantity} шт.`],
+              ['Объём', `${order.volume} см³`],
+              ['Вес', `${order.weight} г`],
+            ].map(([label, val]) => (
+              <div key={label}>
+                <p className="font-mono text-[10px] tracking-wider uppercase mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                <p className="font-sans text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{val}</p>
+              </div>
+            ))}
+            {order.comments && (
+              <div className="col-span-2 md:col-span-3">
+                <p className="font-mono text-[10px] tracking-wider uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Комментарий</p>
+                <p className="font-sans text-sm" style={{ color: 'var(--text-secondary)' }}>{order.comments}</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

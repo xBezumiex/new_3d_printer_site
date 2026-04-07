@@ -52,7 +52,7 @@ export default function Footer() {
           </div>
 
           {/* Links */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             <div>
               <p className="font-mono text-xs tracking-widest2 uppercase mb-5" style={{ color: 'var(--text-muted)' }}>
                 Услуги
