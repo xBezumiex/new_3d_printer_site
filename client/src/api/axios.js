@@ -51,6 +51,11 @@ axiosInstance.interceptors.response.use(
       return Promise.reject({ message: 'Сервер не отвечает', status: 0 });
     }
 
+    // Устройство офлайн — ретраи бессмысленны, не спамим консоль
+    if (navigator.onLine === false) {
+      return Promise.reject({ message: 'Нет подключения к интернету', status: 0 });
+    }
+
     config._retryCount = (config._retryCount || 0) + 1;
 
     // Только 2 попытки для GET (cold start Render ~15с), 1 для остальных
