@@ -8,6 +8,16 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import AppRoutes from './routes';
 
+// Перезагрузка при ошибке загрузки lazy-chunk (офлайн / устаревший кеш)
+window.addEventListener('unhandledrejection', (e) => {
+  const msg = e.reason?.message || '';
+  if (msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Importing a module script failed')) {
+    e.preventDefault();
+    window.location.reload();
+  }
+});
+
 /* ── Scroll progress bar ─────────────────────────── */
 function ScrollProgress() {
   const barRef = useRef(null);
