@@ -134,7 +134,7 @@ function ChatWindow({ partnerId, currentUser }) {
     setUploadingImage(true);
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('image', file);
       const uploadRes = await axiosInstance.post('/upload/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
