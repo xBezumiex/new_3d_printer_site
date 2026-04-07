@@ -32,14 +32,12 @@ axiosInstance.interceptors.response.use(
     // Серверный ответ с HTTP-ошибкой
     if (error.response) {
       const { status, data } = error.response;
-
       if (status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         const loginPath = (BASE_URL + 'login').replace('//', '/');
         window.location.href = loginPath;
       }
-
       return Promise.reject({
         message: data?.error || data?.message || 'Произошла ошибка',
         status,
@@ -47,42 +45,36 @@ axiosInstance.interceptors.response.use(
       });
     }
 
-    // Нет ответа = сетевая ошибка (сервер спит или нет сети)
-    // Фоновые polling-запросы (_noRetry) — тихо проваливаются
+    // Нет ответа = сетевая ошибка
+    // Фоновые polling-запросы (_noRetry) — тихо проваливаются без retry
     if (config._noRetry) {
       return Promise.reject({ message: 'Сервер не отвечает', status: 0 });
     }
 
-    const method = (config.method || 'get').toLowerCase();
-    const isSafe = method === 'get';
     config._retryCount = (config._retryCount || 0) + 1;
 
-    // GET — до 5 попыток, остальные — 1 повтор (на случай cold start Render)
-    const maxRetries = isSafe ? 5 : 1;
+    // Только 2 попытки для GET (cold start Render ~15с), 1 для остальных
+    // Меньше попыток = меньше ERR_INTERNET_DISCONNECTED в консоли
+    const maxRetries = (config.method || 'get').toLowerCase() === 'get' ? 2 : 1;
 
     if (config._retryCount <= maxRetries) {
       if (config._retryCount === 1) {
         toast.loading('Сервер просыпается, подождите...', {
           id: 'server-wakeup',
-          duration: 60000,
+          duration: 40000,
         });
       }
-
-      // Нарастающая задержка: 5s, 8s, 10s, 12s, 15s
-      const delays = [5000, 8000, 10000, 12000, 15000];
-      const delay = delays[config._retryCount - 1] || 15000;
+      // 8с первая попытка, 12с вторая — покрывает cold start Render
+      const delay = config._retryCount === 1 ? 8000 : 12000;
       await new Promise((resolve) => setTimeout(resolve, delay));
-
       return axiosInstance(config);
     }
 
-    // Исчерпали попытки
     toast.dismiss('server-wakeup');
-    toast.error('Сервер недоступен. Попробуйте обновить страницу.', {
+    toast.error('Сервер недоступен. Попробуйте позже.', {
       id: 'server-offline',
-      duration: 6000,
+      duration: 5000,
     });
-
     return Promise.reject({ message: 'Сервер не отвечает', status: 0 });
   }
 );
