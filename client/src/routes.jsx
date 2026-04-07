@@ -3,14 +3,18 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute, { GuestRoute, AdminRoute } from './components/auth/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
+import ChunkErrorBoundary from './components/ChunkErrorBoundary';
 
 // Скелетон-заглушка при загрузке страницы
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
       <div className="flex flex-col items-center gap-3">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
-        <p className="text-sm text-gray-400 dark:text-gray-500">Загрузка...</p>
+        <div className="w-8 h-8 border-2 rounded-full animate-spin"
+          style={{ borderColor: 'var(--border-strong)', borderTopColor: 'var(--accent)' }} />
+        <p className="font-mono text-xs tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+          Загрузка...
+        </p>
       </div>
     </div>
   );
@@ -46,6 +50,7 @@ export default function AppRoutes() {
   return (
     <>
       <ScrollToTop />
+      <ChunkErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Публичные маршруты */}
@@ -92,6 +97,7 @@ export default function AppRoutes() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
+      </ChunkErrorBoundary>
     </>
   );
 }
