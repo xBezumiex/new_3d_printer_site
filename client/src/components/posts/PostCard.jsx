@@ -85,14 +85,16 @@ export default function PostCard({ post }) {
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Link
         to={`/posts/${post.id}`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className="glass grad-border"
         style={{
-          display: 'block',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
           textDecoration: 'none',
           borderRadius: 4,
           overflow: 'hidden',
@@ -150,7 +152,7 @@ export default function PostCard({ post }) {
         </div>
 
         {/* Content */}
-        <div style={{ padding: '16px 18px 14px' }}>
+        <div style={{ padding: '16px 18px 14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
           <h3 style={{
             fontSize: 15, fontWeight: 600, color: 'var(--text-primary)',
             marginBottom: 6, lineHeight: 1.4,
@@ -185,7 +187,7 @@ export default function PostCard({ post }) {
           )}
 
           {/* Meta */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)' }}>
                 <User size={11} />

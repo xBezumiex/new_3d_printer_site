@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { ShoppingBag, Users, DollarSign, Clock, CheckCircle, XCircle, RefreshCw, Flag, Tag, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ShoppingBag, Users, DollarSign, Clock, CheckCircle, RefreshCw, Flag, Tag, Plus, Trash2, ToggleLeft, ToggleRight, BookOpen, Edit2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import * as ordersApi from '../api/orders.api';
 import * as usersApi from '../api/users.api';
 import { getReports, updateReportStatus } from '../api/reports.api';
 import { getPromos, createPromo, togglePromo, deletePromo } from '../api/promo.api';
+import * as coursesApi from '../api/courses.api';
 import toast from 'react-hot-toast';
 
 const STATUS_CONFIG = {
@@ -63,6 +64,10 @@ export default function AdminPage() {
   const [promos, setPromos] = useState([]);
   const [promosLoading, setPromosLoading] = useState(false);
   const [newPromo, setNewPromo] = useState({ code: '', discount: 10, maxUses: 100 });
+  const [courses, setCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [courseForm, setCourseForm] = useState({ title: '', description: '', level: 'BEGINNER' });
+  const [editingCourse, setEditingCourse] = useState(null);
 
   useEffect(() => {
     if (user?.role === 'ADMIN') { loadOrders(); loadStats(); }
@@ -72,6 +77,7 @@ export default function AdminPage() {
     if (activeTab === 'users'   && user?.role === 'ADMIN') loadUsers();
     if (activeTab === 'reports' && user?.role === 'ADMIN') loadReports();
     if (activeTab === 'promos'  && user?.role === 'ADMIN') loadPromos();
+    if (activeTab === 'courses' && user?.role === 'ADMIN') loadCourses();
   }, [activeTab, user]);
 
   if (!user || user.role !== 'ADMIN') return <Navigate to="/" replace />;
@@ -168,6 +174,48 @@ export default function AdminPage() {
     } catch { toast.error('Ошибка'); }
   };
 
+  const loadCourses = async () => {
+    setCoursesLoading(true);
+    try {
+      const data = await coursesApi.getCourses({ limit: 50 });
+      setCourses(data.data?.data?.courses || data.data?.courses || []);
+    } catch { toast.error('Ошибка загрузки курсов'); }
+    finally { setCoursesLoading(false); }
+  };
+
+  const handleSaveCourse = async () => {
+    if (!courseForm.title.trim()) return toast.error('Введите название курса');
+    try {
+      if (editingCourse) {
+        const data = await coursesApi.updateCourse(editingCourse.id, courseForm);
+        const updated = data.data?.data?.course || data.data?.course;
+        setCourses(prev => prev.map(c => c.id === editingCourse.id ? updated : c));
+        toast.success('Курс обновлён');
+      } else {
+        const data = await coursesApi.createCourse(courseForm);
+        const created = data.data?.data?.course || data.data?.course;
+        setCourses(prev => [created, ...prev]);
+        toast.success('Курс создан');
+      }
+      setCourseForm({ title: '', description: '', level: 'BEGINNER' });
+      setEditingCourse(null);
+    } catch (e) { toast.error(e.response?.data?.message || 'Ошибка'); }
+  };
+
+  const handleDeleteCourse = async (id) => {
+    if (!confirm('Удалить курс и все его уроки?')) return;
+    try {
+      await coursesApi.deleteCourse(id);
+      setCourses(prev => prev.filter(c => c.id !== id));
+      toast.success('Курс удалён');
+    } catch { toast.error('Ошибка'); }
+  };
+
+  const startEditCourse = (course) => {
+    setEditingCourse(course);
+    setCourseForm({ title: course.title, description: course.description || '', level: course.level });
+  };
+
   const formatDate = (d) => new Date(d).toLocaleDateString('ru-RU', {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   });
@@ -214,6 +262,7 @@ export default function AdminPage() {
             { key: 'users',   label: 'Пользователи' },
             { key: 'reports', label: 'Жалобы' },
             { key: 'promos',  label: 'Промокоды' },
+            { key: 'courses', label: 'Курсы' },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setActiveTab(key)}
               className="px-4 py-2 font-mono text-xs tracking-wider transition-all"
@@ -435,6 +484,125 @@ export default function AdminPage() {
                               onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
                               <Trash2 className="w-4 h-4" />
                             </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Courses tab */}
+        {activeTab === 'courses' && (
+          <div className="space-y-5">
+            {/* Форма создания/редактирования */}
+            <div className="glass p-6">
+              <p className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase mb-4" style={{ color: 'var(--text-muted)' }}>
+                <BookOpen className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />
+                {editingCourse ? 'Редактировать курс' : 'Создать курс'}
+              </p>
+              <div className="space-y-3">
+                <input
+                  value={courseForm.title}
+                  onChange={e => setCourseForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder="Название курса"
+                  style={{ ...inputStyle, width: '100%' }}
+                />
+                <textarea
+                  value={courseForm.description}
+                  onChange={e => setCourseForm(p => ({ ...p, description: e.target.value }))}
+                  placeholder="Описание курса..."
+                  rows={3}
+                  style={{ ...inputStyle, width: '100%', resize: 'vertical' }}
+                />
+                <div className="flex gap-3">
+                  <select
+                    value={courseForm.level}
+                    onChange={e => setCourseForm(p => ({ ...p, level: e.target.value }))}
+                    style={{ ...selectStyle, flexGrow: 1 }}>
+                    <option value="BEGINNER">Начинающий</option>
+                    <option value="INTERMEDIATE">Средний</option>
+                    <option value="ADVANCED">Продвинутый</option>
+                  </select>
+                  <button onClick={handleSaveCourse}
+                    className="font-sans font-semibold text-sm px-5 py-2 transition-opacity"
+                    style={{ background: 'var(--accent)', color: '#000', border: 'none', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                    {editingCourse ? 'Сохранить' : 'Создать'}
+                  </button>
+                  {editingCourse && (
+                    <button onClick={() => { setEditingCourse(null); setCourseForm({ title: '', description: '', level: 'BEGINNER' }); }}
+                      style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Список курсов */}
+            <div className="glass overflow-hidden">
+              <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid var(--border)' }}>
+                <span className="flex items-center gap-2 font-mono text-xs tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
+                  <BookOpen className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} /> Курсы ({courses.length})
+                </span>
+                <button onClick={loadCourses} className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5"
+                  style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                  <RefreshCw className="w-3.5 h-3.5" /> Обновить
+                </button>
+              </div>
+              {coursesLoading ? <Spinner /> : courses.length === 0 ? (
+                <div className="text-center py-12 font-sans text-sm" style={{ color: 'var(--text-muted)' }}>Курсов нет</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead style={{ background: 'var(--bg-raised)' }}>
+                      <tr>
+                        {['Название', 'Уровень', 'Уроков', 'Студентов', 'Действия'].map(h => (
+                          <th key={h} style={{ ...thTd, color: 'var(--text-muted)' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {courses.map(course => (
+                        <tr key={course.id} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-raised)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                          <td style={tdStyle}>
+                            <p style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{course.title}</p>
+                            {course.description && (
+                              <p style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 2 }} className="truncate max-w-xs">{course.description}</p>
+                            )}
+                          </td>
+                          <td style={tdStyle}>
+                            <span className="font-mono text-[10px] px-2 py-1" style={{
+                              background: course.level === 'BEGINNER' ? 'rgba(74,222,128,0.1)' : course.level === 'INTERMEDIATE' ? 'rgba(250,204,21,0.1)' : 'rgba(255,77,0,0.1)',
+                              color: course.level === 'BEGINNER' ? '#4ADE80' : course.level === 'INTERMEDIATE' ? '#FACC15' : 'var(--accent)',
+                              border: `1px solid ${course.level === 'BEGINNER' ? 'rgba(74,222,128,0.3)' : course.level === 'INTERMEDIATE' ? 'rgba(250,204,21,0.3)' : 'rgba(255,77,0,0.3)'}`,
+                            }}>
+                              {course.level === 'BEGINNER' ? 'Начинающий' : course.level === 'INTERMEDIATE' ? 'Средний' : 'Продвинутый'}
+                            </span>
+                          </td>
+                          <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>{course._count?.lessons ?? 0}</td>
+                          <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>{course._count?.progress ?? 0}</td>
+                          <td style={{ ...tdStyle }}>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => startEditCourse(course)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', transition: 'color 0.15s' }}
+                                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleDeleteCourse(course.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', transition: 'color 0.15s' }}
+                                onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

@@ -1,13 +1,15 @@
 // Сервис для работы с постами
 import prisma from '../config/database.js';
 import { NotFoundError, ForbiddenError } from '../utils/errors.js';
+import { stripHtml } from '../utils/sanitize.js';
+import { sendCommentNotification } from './email.service.js';
 
 // Создание поста
 export const createPost = async (userId, postData) => {
   const post = await prisma.post.create({
     data: {
-      title: postData.title,
-      description: postData.description,
+      title: stripHtml(postData.title),
+      description: stripHtml(postData.description),
       tags: Array.isArray(postData.tags)
         ? postData.tags
         : typeof postData.tags === 'string' && postData.tags.trim()
@@ -259,17 +261,27 @@ export const getComments = async (postId) => {
 
 // Добавление комментария к посту
 export const addComment = async (postId, userId, text) => {
-  const post = await prisma.post.findUnique({ where: { id: postId } });
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
   if (!post) throw new NotFoundError('Пост не найден');
 
+  const cleanText = stripHtml(text);
+
   const comment = await prisma.comment.create({
-    data: { text, postId, userId },
+    data: { text: cleanText, postId, userId },
     include: {
       user: {
         select: { id: true, name: true, avatar: true },
       },
     },
   });
+
+  // Email уведомление автору поста (не самому себе)
+  if (post.userId !== userId && post.user?.email) {
+    sendCommentNotification(post.user, comment.user?.name, cleanText, post.title, postId).catch(() => {});
+  }
 
   return comment;
 };

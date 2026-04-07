@@ -69,7 +69,19 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Строгий лимит для auth (защита от брутфорса)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 минут
+  max: 15, // макс 15 попыток с одного IP
+  message: 'Слишком много попыток входа, попробуйте через 15 минут',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // не считать успешные запросы
+});
+
 app.use('/api/', limiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Статические файлы (загруженные изображения — legacy)
 app.use('/uploads', (req, res, next) => {

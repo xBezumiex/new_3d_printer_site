@@ -3,6 +3,7 @@ import prisma from '../config/database.js';
 import { NotFoundError, BadRequestError } from '../utils/errors.js';
 import { createNotification } from './notifications.service.js';
 import { checkAndAwardAchievements } from './achievements.service.js';
+import { sendFollowerNotification } from './email.service.js';
 
 // Подписаться на пользователя
 export const subscribe = async (subscriberId, subscribedToId) => {
@@ -54,8 +55,12 @@ export const subscribe = async (subscriberId, subscribedToId) => {
   });
 
   // Уведомление и ачивки (не блокируем ответ)
-  const subUser = await prisma.user.findUnique({ where: { id: subscriberId }, select: { name: true } });
+  const [subUser, targetUser] = await Promise.all([
+    prisma.user.findUnique({ where: { id: subscriberId }, select: { name: true } }),
+    prisma.user.findUnique({ where: { id: subscribedToId }, select: { id: true, name: true, email: true } }),
+  ]);
   createNotification(subscribedToId, 'NEW_FOLLOWER', `${subUser?.name} подписался(ась) на вас`, `/users/${subscriberId}`).catch(() => {});
+  sendFollowerNotification(targetUser, subUser?.name, subscriberId).catch(() => {});
   checkAndAwardAchievements(subscribedToId).catch(() => {});
 
   return subscription;

@@ -32,6 +32,7 @@ const CreatePostPage   = lazy(() => import('./pages/CreatePostPage'));
 const SearchPage       = lazy(() => import('./pages/SearchPage'));
 const CoursesPage      = lazy(() => import('./pages/CoursesPage'));
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
+const LessonPage       = lazy(() => import('./pages/LessonPage'));
 const MaterialsPage    = lazy(() => import('./pages/MaterialsPage'));
 const FaqPage          = lazy(() => import('./pages/FaqPage'));
 const AboutPage        = lazy(() => import('./pages/AboutPage'));
@@ -67,6 +68,7 @@ export default function AppRoutes() {
           {/* Курсы */}
           <Route path="/courses"     element={<CoursesPage />} />
           <Route path="/courses/:id" element={<CourseDetailPage />} />
+          <Route path="/lessons/:id" element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />
 
           {/* Профили пользователей */}
           <Route path="/users/:id" element={<ProfilePage />} />

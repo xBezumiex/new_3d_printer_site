@@ -2,6 +2,7 @@ import prisma from '../config/database.js';
 import { NotFoundError } from '../utils/errors.js';
 import { createNotification } from './notifications.service.js';
 import { checkAndAwardAchievements } from './achievements.service.js';
+import { sendLikeNotification } from './email.service.js';
 
 export const toggleLike = async (postId, userId) => {
   const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true, userId: true } });
@@ -22,8 +23,13 @@ export const toggleLike = async (postId, userId) => {
 
   // Уведомление автору (не самому себе)
   if (post.userId !== userId) {
-    const liker = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+    const [liker, postAuthor, fullPost] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
+      prisma.user.findUnique({ where: { id: post.userId }, select: { id: true, name: true, email: true } }),
+      prisma.post.findUnique({ where: { id: postId }, select: { title: true } }),
+    ]);
     createNotification(post.userId, 'POST_LIKED', `${liker?.name} оценил(а) ваш пост`, `/posts/${postId}`).catch(() => {});
+    sendLikeNotification(postAuthor, liker?.name, fullPost?.title, postId).catch(() => {});
   }
 
   // Ачивка POPULAR_POST при 50 лайках

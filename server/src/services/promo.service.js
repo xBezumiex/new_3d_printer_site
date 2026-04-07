@@ -13,7 +13,17 @@ export const validatePromo = async (code) => {
 export const applyPromo = async (code) => {
   const promo = await prisma.promoCode.findUnique({ where: { code: code.toUpperCase().trim() } });
   if (!promo) throw new NotFoundError('Промокод не найден');
-  await prisma.promoCode.update({ where: { id: promo.id }, data: { usedCount: { increment: 1 } } });
+  if (!promo.isActive) throw new BadRequestError('Промокод неактивен');
+  if (promo.expiresAt && promo.expiresAt < new Date()) throw new BadRequestError('Срок действия промокода истёк');
+  if (promo.usedCount >= promo.maxUses) throw new BadRequestError('Промокод исчерпан');
+
+  // Атомарное увеличение счётчика только если лимит ещё не исчерпан
+  const updated = await prisma.promoCode.updateMany({
+    where: { id: promo.id, usedCount: { lt: promo.maxUses }, isActive: true },
+    data: { usedCount: { increment: 1 } },
+  });
+
+  if (updated.count === 0) throw new BadRequestError('Промокод исчерпан');
   return { discount: promo.discount };
 };
 

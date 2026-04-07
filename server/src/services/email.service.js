@@ -99,6 +99,87 @@ export const sendOrderNotificationToAdmin = async (user, order) => {
 };
 
 /**
+ * Уведомление о новом лайке
+ */
+export const sendLikeNotification = async (postAuthor, likerName, postTitle, postId) => {
+  if (!postAuthor?.email) return;
+  try {
+    const siteUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    await transporter.sendMail({
+      from: FROM_EMAIL,
+      to: postAuthor.email,
+      subject: `${likerName} оценил(а) ваш пост — 3D Print Lab`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+          <h3 style="color:#3b82f6">Новый лайк на ваш пост!</h3>
+          <p>Привет, <strong>${postAuthor.name}</strong>!</p>
+          <p><strong>${likerName}</strong> оценил(а) ваш пост <strong>"${postTitle}"</strong>.</p>
+          <p><a href="${siteUrl}/posts/${postId}" style="color:#3b82f6">Посмотреть пост →</a></p>
+          <p style="color:#9ca3af;font-size:13px">Команда 3D Print Lab</p>
+        </div>
+      `,
+    });
+  } catch (e) {
+    console.error('Ошибка отправки email о лайке:', e.message);
+  }
+};
+
+/**
+ * Уведомление о новом подписчике
+ */
+export const sendFollowerNotification = async (targetUser, followerName, followerId) => {
+  if (!targetUser?.email) return;
+  try {
+    const siteUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    await transporter.sendMail({
+      from: FROM_EMAIL,
+      to: targetUser.email,
+      subject: `${followerName} подписался(ась) на вас — 3D Print Lab`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+          <h3 style="color:#3b82f6">Новый подписчик!</h3>
+          <p>Привет, <strong>${targetUser.name}</strong>!</p>
+          <p><strong>${followerName}</strong> подписался(ась) на вас.</p>
+          <p><a href="${siteUrl}/users/${followerId}" style="color:#3b82f6">Посмотреть профиль →</a></p>
+          <p style="color:#9ca3af;font-size:13px">Команда 3D Print Lab</p>
+        </div>
+      `,
+    });
+  } catch (e) {
+    console.error('Ошибка отправки email о подписке:', e.message);
+  }
+};
+
+/**
+ * Уведомление о новом комментарии
+ */
+export const sendCommentNotification = async (postAuthor, commenterName, commentText, postTitle, postId) => {
+  if (!postAuthor?.email) return;
+  try {
+    const siteUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    await transporter.sendMail({
+      from: FROM_EMAIL,
+      to: postAuthor.email,
+      subject: `Новый комментарий к вашему посту — 3D Print Lab`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+          <h3 style="color:#3b82f6">Новый комментарий!</h3>
+          <p>Привет, <strong>${postAuthor.name}</strong>!</p>
+          <p><strong>${commenterName}</strong> прокомментировал(а) ваш пост <strong>"${postTitle}"</strong>:</p>
+          <div style="background:#f3f4f6;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #3b82f6">
+            <p style="margin:0;color:#374151">${commentText}</p>
+          </div>
+          <p><a href="${siteUrl}/posts/${postId}" style="color:#3b82f6">Ответить →</a></p>
+          <p style="color:#9ca3af;font-size:13px">Команда 3D Print Lab</p>
+        </div>
+      `,
+    });
+  } catch (e) {
+    console.error('Ошибка отправки email о комментарии:', e.message);
+  }
+};
+
+/**
  * Отправка приветственного email после регистрации
  * @param {Object} user - Данные пользователя
  */
