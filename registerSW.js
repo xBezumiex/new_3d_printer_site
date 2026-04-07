@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/new_3d_printer_site/sw.js', { scope: '/new_3d_printer_site/' })})}
