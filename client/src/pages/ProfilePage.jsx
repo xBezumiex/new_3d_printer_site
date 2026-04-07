@@ -245,7 +245,8 @@ export default function ProfilePage() {
       {/* Tabs + content */}
       <div className="container mx-auto px-6 py-8 max-w-5xl">
         {/* Tab bar */}
-        <div className="flex gap-1 mb-8 w-fit" style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', padding: 4, backdropFilter: 'blur(12px)' }}>
+        <div className="overflow-x-auto mb-8" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex gap-1 w-fit" style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', padding: 4, backdropFilter: 'blur(12px)' }}>
           {tabs.map(({ key, icon: Icon, label }) => (
             <button key={key} onClick={() => setActiveTab(key)}
               className="flex items-center gap-2 px-4 py-2 font-mono text-xs tracking-wider transition-all"
@@ -256,6 +257,7 @@ export default function ProfilePage() {
               <Icon className="w-3.5 h-3.5" /> {label}
             </button>
           ))}
+        </div>
         </div>
 
         {/* Posts tab */}

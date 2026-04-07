@@ -41,7 +41,7 @@ export default function PostsPage() {
       {/* Header */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', padding: '48px 0 32px' }}>
         <div className="container mx-auto px-6">
-          <div className="flex items-end justify-between gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <p className="font-mono text-xs tracking-widest2 uppercase mb-3" style={{ color: 'var(--accent)' }}>
                 / галерея

@@ -375,4 +375,24 @@ input[type="range"]::-moz-range-thumb {
   }
 }
 
+/* ─── Stats grid: remove right borders on 2-col mobile ─── */
+@media (max-width: 767px) {
+  .stats-cell:nth-child(even) {
+    border-right: none !important;
+  }
+  .stats-cell:nth-child(1),
+  .stats-cell:nth-child(3) {
+    border-right: 1px solid var(--border) !important;
+  }
+  .stats-cell:nth-child(2),
+  .stats-cell:nth-child(4) {
+    border-right: none !important;
+  }
+  /* Add bottom borders between rows */
+  .stats-cell:nth-child(1),
+  .stats-cell:nth-child(2) {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
 
