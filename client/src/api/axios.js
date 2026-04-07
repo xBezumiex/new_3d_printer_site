@@ -10,6 +10,10 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+// Circuit breaker: после исчерпания ретраев блокируем все запросы на 30с,
+// чтобы параллельные компоненты не спамили консоль одинаковыми ошибками
+let _circuitBreakerUntil = 0;
+
 // ── Request interceptor — JWT токен ──────────────────────────────────────────
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -24,6 +28,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     toast.dismiss('server-wakeup');
+    _circuitBreakerUntil = 0; // сервер ожил — сбрасываем circuit breaker
     return response;
   },
   async (error) => {
@@ -46,20 +51,25 @@ axiosInstance.interceptors.response.use(
     }
 
     // Нет ответа = сетевая ошибка
+
     // Фоновые polling-запросы (_noRetry) — тихо проваливаются без retry
     if (config._noRetry) {
       return Promise.reject({ message: 'Сервер не отвечает', status: 0 });
     }
 
-    // Устройство офлайн — ретраи бессмысленны, не спамим консоль
+    // Circuit breaker: сервер уже признан недоступным — не дублируем запросы
+    if (Date.now() < _circuitBreakerUntil) {
+      return Promise.reject({ message: 'Сервер не отвечает', status: 0 });
+    }
+
+    // Устройство офлайн — ретраи бессмысленны
     if (navigator.onLine === false) {
       return Promise.reject({ message: 'Нет подключения к интернету', status: 0 });
     }
 
     config._retryCount = (config._retryCount || 0) + 1;
 
-    // Только 2 попытки для GET (cold start Render ~15с), 1 для остальных
-    // Меньше попыток = меньше ERR_INTERNET_DISCONNECTED в консоли
+    // 2 попытки для GET (cold start Render ~15с), 1 для остальных
     const maxRetries = (config.method || 'get').toLowerCase() === 'get' ? 2 : 1;
 
     if (config._retryCount <= maxRetries) {
@@ -75,6 +85,8 @@ axiosInstance.interceptors.response.use(
       return axiosInstance(config);
     }
 
+    // Исчерпали ретраи — включаем circuit breaker на 30с
+    _circuitBreakerUntil = Date.now() + 30_000;
     toast.dismiss('server-wakeup');
     toast.error('Сервер недоступен. Попробуйте позже.', {
       id: 'server-offline',
