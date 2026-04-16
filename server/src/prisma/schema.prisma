@@ -15,12 +15,16 @@ datasource db {
 model User {
   id            String   @id @default(uuid())
   email         String   @unique
-  password      String
+  password      String?  // null для OAuth-пользователей
   name          String
   phone         String?
   avatar        String?  // URL Cloudinary
   bio           String?  @db.Text
   role          Role     @default(USER)
+
+  // OAuth
+  provider      String   @default("local") // "local" | "google" | "github"
+  providerId    String?  // ID пользователя у провайдера
 
   // Последняя активность
   lastActivity  DateTime?
@@ -47,6 +51,7 @@ model User {
   achievements     Achievement[]
 
   @@map("users")
+  @@index([provider, providerId])
 }
 
 enum Role {

@@ -45,6 +45,7 @@ const ChatPage             = lazy(() => import('./pages/ChatPage'));
 const NotificationsPage    = lazy(() => import('./pages/NotificationsPage'));
 const ContactPage          = lazy(() => import('./pages/ContactPage'));
 const NotFoundPage         = lazy(() => import('./pages/NotFoundPage'));
+const OAuthCallbackPage    = lazy(() => import('./pages/OAuthCallbackPage'));
 
 export default function AppRoutes() {
   return (
@@ -55,8 +56,9 @@ export default function AppRoutes() {
         <Routes>
           {/* Публичные маршруты */}
           <Route path="/"          element={<HomePage />} />
-          <Route path="/login"     element={<GuestRoute><LoginPage /></GuestRoute>} />
-          <Route path="/register"  element={<GuestRoute><RegisterPage /></GuestRoute>} />
+          <Route path="/login"          element={<GuestRoute><LoginPage /></GuestRoute>} />
+          <Route path="/register"       element={<GuestRoute><RegisterPage /></GuestRoute>} />
+          <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
           <Route path="/calculator" element={<CalculatorPage />} />
           <Route path="/materials" element={<MaterialsPage />} />
           <Route path="/faq"       element={<FaqPage />} />

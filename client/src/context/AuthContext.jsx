@@ -84,6 +84,16 @@ export const AuthProvider = ({ children }) => {
     return response;
   };
 
+  // Вход через OAuth (токен + данные пользователя уже получены от сервера)
+  const loginWithOAuth = async (token, userData) => {
+    setUser(userData);
+    setToken(token);
+    setIsAuthenticated(true);
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
   // Логаут
   const logout = () => {
     setUser(null);
@@ -115,6 +125,7 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     register,
     login,
+    loginWithOAuth,
     logout,
     loadUser,
     updateUserProfile,

@@ -13,55 +13,37 @@ import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
 
-// Rate limiting для auth endpoints (более строгий)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 минут
-  max: 5, // макс 5 попыток
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   message: 'Слишком много попыток входа. Попробуйте через 15 минут',
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-/**
- * @route   POST /api/auth/register
- * @desc    Регистрация нового пользователя
- * @access  Public
- */
+// ──────────────────────────────────────────────
+// Локальная авторизация
+// ──────────────────────────────────────────────
+
 router.post('/register', authLimiter, validate(registerSchema), authController.register);
+router.post('/login',    authLimiter, validate(loginSchema),    authController.login);
+router.post('/logout',   authController.logout);
+router.get ('/me',       authenticate, authController.getCurrentUser);
+router.put ('/me',       authenticate, validate(updateProfileSchema), authController.updateProfile);
+router.put ('/password', authenticate, validate(changePasswordSchema), authController.changePassword);
 
-/**
- * @route   POST /api/auth/login
- * @desc    Логин пользователя
- * @access  Public
- */
-router.post('/login', authLimiter, validate(loginSchema), authController.login);
+// ──────────────────────────────────────────────
+// Google OAuth
+// ──────────────────────────────────────────────
 
-/**
- * @route   POST /api/auth/logout
- * @desc    Логаут (клиент удаляет токен)
- * @access  Public
- */
-router.post('/logout', authController.logout);
+router.get('/google',          authController.googleAuth);
+router.get('/google/callback', authController.googleCallback);
 
-/**
- * @route   GET /api/auth/me
- * @desc    Получить текущего пользователя
- * @access  Private
- */
-router.get('/me', authenticate, authController.getCurrentUser);
+// ──────────────────────────────────────────────
+// GitHub OAuth
+// ──────────────────────────────────────────────
 
-/**
- * @route   PUT /api/auth/me
- * @desc    Обновить профиль
- * @access  Private
- */
-router.put('/me', authenticate, validate(updateProfileSchema), authController.updateProfile);
-
-/**
- * @route   PUT /api/auth/password
- * @desc    Изменить пароль
- * @access  Private
- */
-router.put('/password', authenticate, validate(changePasswordSchema), authController.changePassword);
+router.get('/github',          authController.githubAuth);
+router.get('/github/callback', authController.githubCallback);
 
 export default router;
