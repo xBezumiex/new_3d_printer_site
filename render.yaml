@@ -27,3 +27,18 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      # OAuth — задаются вручную в Render Dashboard
+      - key: FRONTEND_URL
+        value: https://xbezumiex.github.io
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false   # https://your-api.onrender.com/api/auth/google/callback
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CALLBACK_URL
+        sync: false   # https://your-api.onrender.com/api/auth/github/callback
