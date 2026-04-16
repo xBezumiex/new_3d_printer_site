@@ -55,12 +55,12 @@ export const subscribe = async (subscriberId, subscribedToId) => {
   });
 
   // Уведомление и ачивки (не блокируем ответ)
-  const [subUser, targetUser] = await Promise.all([
+  const [subUser, targetUserFull] = await Promise.all([
     prisma.user.findUnique({ where: { id: subscriberId }, select: { name: true } }),
     prisma.user.findUnique({ where: { id: subscribedToId }, select: { id: true, name: true, email: true } }),
   ]);
   createNotification(subscribedToId, 'NEW_FOLLOWER', `${subUser?.name} подписался(ась) на вас`, `/users/${subscriberId}`).catch(() => {});
-  sendFollowerNotification(targetUser, subUser?.name, subscriberId).catch(() => {});
+  sendFollowerNotification(targetUserFull, subUser?.name, subscriberId).catch(() => {});
   checkAndAwardAchievements(subscribedToId).catch(() => {});
 
   return subscription;
