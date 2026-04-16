@@ -11,16 +11,14 @@ export const useTheme = () => {
   return context;
 };
 
+const THEME_KEY = 'theme_v2';
+
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    // Загрузка темы из localStorage или системных настроек
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
+    // Загрузка темы из localStorage (ключ v2, старый игнорируется)
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark') {
       return savedTheme;
-    }
-    // Проверка системных настроек
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
     }
     return 'dark';
   });
@@ -35,7 +33,7 @@ export const ThemeProvider = ({ children }) => {
       root.classList.remove('dark');
     }
 
-    localStorage.setItem('theme', theme);
+    localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
   // Переключение темы
