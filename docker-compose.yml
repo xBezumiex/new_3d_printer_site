@@ -27,6 +27,8 @@ services:
     container_name: 3d_print_server
     ports:
       - '5000:5000'
+    env_file:
+      - ./server/.env
     environment:
       NODE_ENV: production
       PORT: 5000
