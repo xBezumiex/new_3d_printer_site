@@ -6,7 +6,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http
 
 const oauthPopupHtml = (payload) => `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Авторизация</title></head>
-<body>
+<body style="background:#0a0a0f">
 <script>
   (function(){
     try {
@@ -18,7 +18,6 @@ const oauthPopupHtml = (payload) => `<!DOCTYPE html>
     window.close();
   })();
 </script>
-<p style="font-family:sans-serif;text-align:center;margin-top:40px;color:#888">Закрываем окно...</p>
 </body></html>`;
 
 // ──────────────────────────────────────────────
