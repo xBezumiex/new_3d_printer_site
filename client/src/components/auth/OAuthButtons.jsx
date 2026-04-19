@@ -35,6 +35,7 @@ function useOAuthPopup() {
 
   useEffect(() => {
     const handler = async (event) => {
+      if (event.origin !== window.location.origin) return;
       if (!event.data?.type?.startsWith('OAUTH_')) return;
 
       setLoading(null);

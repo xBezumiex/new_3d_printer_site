@@ -4,22 +4,6 @@ import * as oauthService from '../services/oauth.service.js';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
 
-const oauthPopupHtml = (payload) => `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Авторизация</title></head>
-<body style="background:#0a0a0f">
-<script>
-  (function(){
-    try {
-      var msg = ${JSON.stringify(payload)};
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage(msg, '*');
-      }
-    } catch(e) {}
-    window.close();
-  })();
-</script>
-</body></html>`;
-
 // ──────────────────────────────────────────────
 // Локальная авторизация
 // ──────────────────────────────────────────────
@@ -77,7 +61,7 @@ export const googleCallback = async (req, res) => {
   const { code, error } = req.query;
 
   if (error || !code) {
-    return res.send(oauthPopupHtml({ type: 'OAUTH_ERROR', error: 'access_denied' }));
+    return res.redirect(`${FRONTEND_URL}/oauth-callback?error=access_denied`);
   }
 
   try {
@@ -90,10 +74,11 @@ export const googleCallback = async (req, res) => {
       avatar:     profile.avatar,
     });
 
-    res.send(oauthPopupHtml({ type: 'OAUTH_SUCCESS', token, user }));
+    const userParam = encodeURIComponent(JSON.stringify(user));
+    res.redirect(`${FRONTEND_URL}/oauth-callback?token=${token}&user=${userParam}`);
   } catch (err) {
     console.error('[Google OAuth]', err.message);
-    res.send(oauthPopupHtml({ type: 'OAUTH_ERROR', error: 'oauth_failed' }));
+    res.redirect(`${FRONTEND_URL}/oauth-callback?error=oauth_failed`);
   }
 };
 
@@ -109,7 +94,7 @@ export const githubCallback = async (req, res) => {
   const { code, error } = req.query;
 
   if (error || !code) {
-    return res.send(oauthPopupHtml({ type: 'OAUTH_ERROR', error: 'access_denied' }));
+    return res.redirect(`${FRONTEND_URL}/oauth-callback?error=access_denied`);
   }
 
   try {
@@ -122,9 +107,10 @@ export const githubCallback = async (req, res) => {
       avatar:     profile.avatar,
     });
 
-    res.send(oauthPopupHtml({ type: 'OAUTH_SUCCESS', token, user }));
+    const userParam = encodeURIComponent(JSON.stringify(user));
+    res.redirect(`${FRONTEND_URL}/oauth-callback?token=${token}&user=${userParam}`);
   } catch (err) {
     console.error('[GitHub OAuth]', err.message);
-    res.send(oauthPopupHtml({ type: 'OAUTH_ERROR', error: 'oauth_failed' }));
+    res.redirect(`${FRONTEND_URL}/oauth-callback?error=oauth_failed`);
   }
 };
