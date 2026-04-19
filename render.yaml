@@ -30,7 +30,7 @@ services:
       - key: FRONTEND_URL
         value: https://xbezumiex.github.io/new_3d_printer_site
       - key: GOOGLE_CLIENT_ID
-        value: 159346122196-ok2bo4ugd0nab354qr9ndqj5kbksdsf9.apps.googleusercontent.com
+        value: 692826386412-ut7akn2ham1hpkogt3jifc26u0lo1div.apps.googleusercontent.com
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: GOOGLE_CALLBACK_URL
