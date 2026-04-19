@@ -1,6 +1,14 @@
 // OAuth сервис — Google и GitHub через нативный fetch (Node 18+)
 // Не требует passport или дополнительных пакетов
 
+const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID     || '692826386412-ut7akn2ham1hpkogt3jifc26u0lo1div.apps.googleusercontent.com';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || process.env.OOGLE_CLIENT_SECRET || '';
+const GOOGLE_CALLBACK_URL  = process.env.GOOGLE_CALLBACK_URL  || 'https://threed-print-lab-api.onrender.com/api/auth/google/callback';
+
+const GITHUB_CLIENT_ID     = process.env.GITHUB_CLIENT_ID     || 'Ov23liuDVLSsqzPkhVHo';
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
+const GITHUB_CALLBACK_URL  = process.env.GITHUB_CALLBACK_URL  || 'https://threed-print-lab-api.onrender.com/api/auth/github/callback';
+
 // ──────────────────────────────────────────────
 // GOOGLE
 // ──────────────────────────────────────────────
@@ -10,8 +18,8 @@
  */
 export const getGoogleAuthUrl = () => {
   const params = new URLSearchParams({
-    client_id:     process.env.GOOGLE_CLIENT_ID,
-    redirect_uri:  process.env.GOOGLE_CALLBACK_URL,
+    client_id:     GOOGLE_CLIENT_ID,
+    redirect_uri:  GOOGLE_CALLBACK_URL,
     response_type: 'code',
     scope:         'openid email profile',
     access_type:   'online',
@@ -31,9 +39,9 @@ export const getGoogleProfile = async (code) => {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code,
-      client_id:     process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri:  process.env.GOOGLE_CALLBACK_URL,
+      client_id:     GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      redirect_uri:  GOOGLE_CALLBACK_URL,
       grant_type:    'authorization_code',
     }),
   });
@@ -73,8 +81,8 @@ export const getGoogleProfile = async (code) => {
  */
 export const getGithubAuthUrl = () => {
   const params = new URLSearchParams({
-    client_id:    process.env.GITHUB_CLIENT_ID,
-    redirect_uri: process.env.GITHUB_CALLBACK_URL,
+    client_id:    GITHUB_CLIENT_ID,
+    redirect_uri: GITHUB_CALLBACK_URL,
     scope:        'user:email',
   });
   return `https://github.com/login/oauth/authorize?${params}`;
@@ -93,10 +101,10 @@ export const getGithubProfile = async (code) => {
       Accept: 'application/json',
     },
     body: new URLSearchParams({
-      client_id:     process.env.GITHUB_CLIENT_ID,
-      client_secret: process.env.GITHUB_CLIENT_SECRET,
+      client_id:     GITHUB_CLIENT_ID,
+      client_secret: GITHUB_CLIENT_SECRET,
       code,
-      redirect_uri:  process.env.GITHUB_CALLBACK_URL,
+      redirect_uri:  GITHUB_CALLBACK_URL,
     }),
   });
 
