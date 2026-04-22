@@ -1,1 +1,25 @@
-if(!self.define){let s,e={};const l=(l,i)=>(l=new URL(l+".js",i).href,e[l]||new Promise(e=>{if("document"in self){const s=document.createElement("script");s.src=l,s.onload=e,document.head.appendChild(s)}else s=l,importScripts(l),e()}).then(()=>{let s=e[l];if(!s)throw new Error(`Module ${l} didn’t register its module`);return s}));self.define=(i,r)=>{const n=s||("document"in self?document.currentScript.src:"")||location.href;if(e[n])return;let u={};const a=s=>l(s,n),o={module:{uri:n},exports:u,require:a};e[n]=Promise.all(i.map(s=>o[s]||a(s))).then(s=>(r(...s),u))}}define(["./workbox-8c29f6e4"],function(s){"use strict";self.skipWaiting(),s.clientsClaim(),s.precacheAndRoute([{url:"registerSW.js",revision:"e649a9b57eb9f52033bf7621fa68cc25"},{url:"index.html",revision:"d669256109643a261646096c5bc6cf6d"},{url:"favicon.svg",revision:"3ba5659ab6618d8574c3f4c75e597d07"},{url:"404.html",revision:"80c595adc438afcb07951a505ef36d08"},{url:"assets/users.api-BbloY0N0.js",revision:null},{url:"assets/ui-libs-I17WRsZC.js",revision:null},{url:"assets/three-core-C7BTFriW.js",revision:null},{url:"assets/reports.api-DhuesK1c.js",revision:null},{url:"assets/react-router-B4H_OlQL.js",revision:null},{url:"assets/react-core-DBg3OWjl.js",revision:null},{url:"assets/promo.api-2PPEkG6L.js",revision:null},{url:"assets/posts.api-CUSNJHlR.js",revision:null},{url:"assets/orders.api-D2je9MFd.js",revision:null},{url:"assets/index-BvB4vB9A.js",revision:null},{url:"assets/index-B6thQjRY.css",revision:null},{url:"assets/courses.api--fpai9De.js",revision:null},{url:"assets/UploadPage-CxS7iJ_o.js",revision:null},{url:"assets/SearchPage-b1Vy6mhq.js",revision:null},{url:"assets/RegisterPage-WZYAP0Q-.js",revision:null},{url:"assets/ProfilePage-DNHPaoDe.js",revision:null},{url:"assets/PostsPage-CdDzRqSQ.js",revision:null},{url:"assets/PostDetailPage-D-yQlExK.js",revision:null},{url:"assets/PostCard-VHzW7Hx4.js",revision:null},{url:"assets/OrderPage-yU4P7ZaW.js",revision:null},{url:"assets/OrderDetailPage-BRxxlvna.js",revision:null},{url:"assets/OAuthCallbackPage-DfMl3-yu.js",revision:null},{url:"assets/OAuthButtons-BXUJnHQF.js",revision:null},{url:"assets/NotificationsPage-DIk1iUCU.js",revision:null},{url:"assets/NotFoundPage-D5nCgbdg.js",revision:null},{url:"assets/MaterialsPage-Dh7M-9q2.js",revision:null},{url:"assets/LoginPage-D5RlFCO1.js",revision:null},{url:"assets/LessonPage-RrQbTgP3.js",revision:null},{url:"assets/HomePage-BzPCN32w.js",revision:null},{url:"assets/FaqPage-DlJCfEB0.js",revision:null},{url:"assets/DashboardPage-Bx-EPN8n.js",revision:null},{url:"assets/CreatePostPage-XSuZHqVl.js",revision:null},{url:"assets/CoursesPage-4bTZRbDg.js",revision:null},{url:"assets/CourseDetailPage-BPDHytzu.js",revision:null},{url:"assets/ContactPage-BEM1nkip.js",revision:null},{url:"assets/ChatPage-dgY1oZOA.js",revision:null},{url:"assets/CalculatorPage-D8iaWSe_.js",revision:null},{url:"assets/Breadcrumb-D2zESg1C.js",revision:null},{url:"assets/AdminPage-By6UmuTu.js",revision:null},{url:"assets/AboutPage-C2Hran6F.js",revision:null},{url:"favicon.svg",revision:"3ba5659ab6618d8574c3f4c75e597d07"},{url:"manifest.webmanifest",revision:"0e3e0f64614d915dedf77ae18c359e7e"}],{}),s.cleanupOutdatedCaches(),s.registerRoute(new s.NavigationRoute(s.createHandlerBoundToURL("index.html"),{denylist:[/^\/api\//]}))});
+
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+self.addEventListener('activate', (e) => {
+  self.registration.unregister()
+    .then(() => self.clients.matchAll())
+    .then((clients) => {
+      clients.forEach((client) => {
+        if (client instanceof WindowClient)
+          client.navigate(client.url);
+      });
+      return Promise.resolve();
+    })
+    .then(() => {
+      self.caches.keys().then((cacheNames) => {
+        Promise.all(
+          cacheNames.map((cacheName) => {
+            return self.caches.delete(cacheName);
+          }),
+        );
+      })
+    });
+});
+    
