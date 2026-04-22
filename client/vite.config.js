@@ -10,18 +10,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       base,
+      selfDestroying: true,
       workbox: {
-        // Кешируем только статику — JS/CSS/HTML/шрифты/иконки
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
-        // API-запросы НЕ кешируем через SW — axios сам управляет ретраями
+        globPatterns: [],
         runtimeCaching: [],
-        // Вытесняем старый SW немедленно, чтобы убрать устаревшую API-кеш-логику
         skipWaiting: true,
         clientsClaim: true,
-        // SPA: 404 для /posts, /courses и т.д. → отдаём index.html
-        navigateFallback: 'index.html',
-        // Не применяем navigateFallback к API-запросам
-        navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
       },
       manifest: {
