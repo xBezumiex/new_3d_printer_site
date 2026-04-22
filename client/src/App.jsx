@@ -1,4 +1,4 @@
-import { HashRouter, useLocation } from 'react-router-dom';
+import { BrowserRouter, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useEffect, useRef, useState } from 'react';
 import { AuthProvider } from './context/AuthContext';
@@ -182,9 +182,9 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <ModelProvider>
-          <HashRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <AppShell />
-          </HashRouter>
+          </BrowserRouter>
         </ModelProvider>
       </AuthProvider>
     </ThemeProvider>
