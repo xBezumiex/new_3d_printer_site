@@ -61,7 +61,7 @@ export const googleCallback = async (req, res) => {
   const { code, error } = req.query;
 
   if (error || !code) {
-    return res.redirect(`${FRONTEND_URL}/oauth-callback?error=access_denied`);
+    return res.redirect(`${FRONTEND_URL}/?/oauth-callback&error=access_denied`);
   }
 
   try {
@@ -75,10 +75,10 @@ export const googleCallback = async (req, res) => {
     });
 
     const userParam = encodeURIComponent(JSON.stringify(user));
-    res.redirect(`${FRONTEND_URL}/oauth-callback?token=${token}&user=${userParam}`);
+    res.redirect(`${FRONTEND_URL}/?/oauth-callback&token=${token}~and~user=${userParam}`);
   } catch (err) {
     console.error('[Google OAuth]', err.message);
-    res.redirect(`${FRONTEND_URL}/oauth-callback?error=oauth_failed`);
+    res.redirect(`${FRONTEND_URL}/?/oauth-callback&error=oauth_failed`);
   }
 };
 
@@ -94,7 +94,7 @@ export const githubCallback = async (req, res) => {
   const { code, error } = req.query;
 
   if (error || !code) {
-    return res.redirect(`${FRONTEND_URL}/oauth-callback?error=access_denied`);
+    return res.redirect(`${FRONTEND_URL}/?/oauth-callback&error=access_denied`);
   }
 
   try {
@@ -108,9 +108,9 @@ export const githubCallback = async (req, res) => {
     });
 
     const userParam = encodeURIComponent(JSON.stringify(user));
-    res.redirect(`${FRONTEND_URL}/oauth-callback?token=${token}&user=${userParam}`);
+    res.redirect(`${FRONTEND_URL}/?/oauth-callback&token=${token}~and~user=${userParam}`);
   } catch (err) {
     console.error('[GitHub OAuth]', err.message);
-    res.redirect(`${FRONTEND_URL}/oauth-callback?error=oauth_failed`);
+    res.redirect(`${FRONTEND_URL}/?/oauth-callback&error=oauth_failed`);
   }
 };
