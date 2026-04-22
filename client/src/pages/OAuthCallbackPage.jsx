@@ -5,7 +5,9 @@ import { useEffect } from 'react';
 
 export default function OAuthCallbackPage() {
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    // HashRouter: params are in window.location.hash after '?'
+    const hashSearch = window.location.hash.split('?')[1] || window.location.search.slice(1);
+    const params = new URLSearchParams(hashSearch);
     const token  = params.get('token');
     const user   = params.get('user');
     const error  = params.get('error');
