@@ -3,7 +3,9 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://xbezumiex.github.io',
+  'https://new-3d-printer-site.vercel.app',
   process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 export const corsOptions = {
