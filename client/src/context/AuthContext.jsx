@@ -1,5 +1,5 @@
 // Context для авторизации
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import * as authApi from '../api/auth.api';
 
 const AuthContext = createContext();
@@ -18,9 +18,16 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const skipLoadUserRef = useRef(false);
+
   // Загрузка пользователя при монтировании
   useEffect(() => {
     if (token) {
+      if (skipLoadUserRef.current) {
+        skipLoadUserRef.current = false;
+        setIsLoading(false);
+        return;
+      }
       loadUser();
     } else {
       setIsLoading(false);
@@ -86,6 +93,7 @@ export const AuthProvider = ({ children }) => {
 
   // Вход через OAuth (токен + данные пользователя уже получены от сервера)
   const loginWithOAuth = async (token, userData) => {
+    skipLoadUserRef.current = true;
     setUser(userData);
     setToken(token);
     setIsAuthenticated(true);
