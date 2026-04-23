@@ -1,6 +1,3 @@
-// Страница-посредник для OAuth popup
-// Открывается в popup-окне, извлекает token из URL,
-// передаёт его родительскому окну и закрывается
 import { useEffect } from 'react';
 
 export default function OAuthCallbackPage() {
@@ -10,24 +7,23 @@ export default function OAuthCallbackPage() {
     const user   = params.get('user');
     const error  = params.get('error');
 
-    if (window.opener && !window.opener.closed) {
-      if (error) {
-        window.opener.postMessage({ type: 'OAUTH_ERROR', error }, window.location.origin);
-      } else if (token && user) {
-        try {
-          const parsedUser = JSON.parse(decodeURIComponent(user));
-          window.opener.postMessage({ type: 'OAUTH_SUCCESS', token, user: parsedUser }, window.location.origin);
-        } catch {
-          window.opener.postMessage({ type: 'OAUTH_ERROR', error: 'parse_failed' }, window.location.origin);
-        }
-      } else {
-        window.opener.postMessage({ type: 'OAUTH_ERROR', error: 'no_token' }, window.location.origin);
+    const channel = new BroadcastChannel('oauth_channel');
+
+    if (error) {
+      channel.postMessage({ type: 'OAUTH_ERROR', error });
+    } else if (token && user) {
+      try {
+        const parsedUser = JSON.parse(decodeURIComponent(user));
+        channel.postMessage({ type: 'OAUTH_SUCCESS', token, user: parsedUser });
+      } catch {
+        channel.postMessage({ type: 'OAUTH_ERROR', error: 'parse_failed' });
       }
-      window.close();
     } else {
-      // Если попали сюда без popup (прямой переход) — редиректим на главную
-      window.location.href = '/';
+      channel.postMessage({ type: 'OAUTH_ERROR', error: 'no_token' });
     }
+
+    channel.close();
+    window.close();
   }, []);
 
   return (
