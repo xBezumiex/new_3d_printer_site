@@ -1,31 +1,49 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 export default function OAuthCallbackPage() {
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token  = params.get('token');
-    const user   = params.get('user');
-    const error  = params.get('error');
+  const { loginWithOAuth } = useAuth();
+  const navigate = useNavigate();
+  const done = useRef(false);
 
-    let result;
+  useEffect(() => {
+    if (done.current) return;
+    done.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const user  = params.get('user');
+    const error = params.get('error');
+
     if (error) {
-      result = { type: 'OAUTH_ERROR', error };
-    } else if (token && user) {
-      try {
-        const parsedUser = JSON.parse(decodeURIComponent(user));
-        result = { type: 'OAUTH_SUCCESS', token, user: parsedUser };
-      } catch {
-        result = { type: 'OAUTH_ERROR', error: 'parse_failed' };
-      }
-    } else {
-      result = { type: 'OAUTH_ERROR', error: 'no_token' };
+      const msgs = {
+        access_denied: 'Вы отменили авторизацию.',
+        oauth_failed:  'Ошибка авторизации. Попробуйте снова.',
+        parse_failed:  'Ошибка обработки ответа.',
+        no_token:      'Не удалось получить токен.',
+      };
+      toast.error(msgs[error] || 'Ошибка авторизации.');
+      navigate('/login', { replace: true });
+      return;
     }
 
-    // localStorage storage event is guaranteed to fire in other windows/tabs
-    localStorage.setItem('oauth_result', JSON.stringify(result));
-
-    // Small delay so the storage event fires before the popup closes
-    setTimeout(() => window.close(), 300);
+    if (token && user) {
+      try {
+        const parsedUser = JSON.parse(decodeURIComponent(user));
+        loginWithOAuth(token, parsedUser).then(() => {
+          toast.success(`Добро пожаловать, ${parsedUser.name || ''}!`);
+          navigate('/dashboard', { replace: true });
+        });
+      } catch {
+        toast.error('Ошибка обработки ответа.');
+        navigate('/login', { replace: true });
+      }
+    } else {
+      toast.error('Не удалось получить токен.');
+      navigate('/login', { replace: true });
+    }
   }, []);
 
   return (
