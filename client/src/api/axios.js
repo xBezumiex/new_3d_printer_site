@@ -25,7 +25,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status, data } = error.response;
-      if (status === 401) {
+      if (status === 401 && !error.config?._noRetry) {
         // Only clear session if the token that caused the 401 is still the
         // current token. If it differs, OAuth completed while this request
         // was in-flight — the stale 401 must not override the fresh session.
