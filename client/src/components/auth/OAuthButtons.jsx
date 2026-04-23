@@ -34,10 +34,9 @@ function useOAuthPopup() {
   const [loading, setLoading] = useState(null); // 'google' | 'github' | null
 
   useEffect(() => {
-    const handler = async (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (!event.data?.type?.startsWith('OAUTH_')) return;
+    const channel = new BroadcastChannel('oauth_channel');
 
+    channel.onmessage = async (event) => {
       setLoading(null);
 
       if (event.data.type === 'OAUTH_SUCCESS') {
@@ -59,8 +58,7 @@ function useOAuthPopup() {
       }
     };
 
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    return () => channel.close();
   }, [loginWithOAuth, navigate]);
 
   const openPopup = (provider) => {
