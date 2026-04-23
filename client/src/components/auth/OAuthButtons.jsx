@@ -1,13 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { useAuth } from '../../context/AuthContext';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// ──────────────────────────────────────────────
-// SVG иконки
-// ──────────────────────────────────────────────
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -24,143 +16,45 @@ const GithubIcon = () => (
   </svg>
 );
 
-// ──────────────────────────────────────────────
-// Хук для открытия OAuth popup
-// ──────────────────────────────────────────────
-function useOAuthPopup() {
-  const popupRef = useRef(null);
-  const { loginWithOAuth } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(null); // 'google' | 'github' | null
-
-  useEffect(() => {
-    const handleStorage = async (e) => {
-      if (e.key !== 'oauth_result' || !e.newValue) return;
-
-      // Remove immediately so it doesn't trigger again
-      localStorage.removeItem('oauth_result');
-
-      let data;
-      try { data = JSON.parse(e.newValue); } catch { return; }
-
-      setLoading(null);
-
-      if (data.type === 'OAUTH_SUCCESS') {
-        try {
-          await loginWithOAuth(data.token, data.user);
-          toast.success(`Добро пожаловать, ${data.user?.name || ''}!`);
-          navigate('/dashboard');
-        } catch {
-          toast.error('Ошибка входа. Попробуйте снова.');
-        }
-      } else if (data.type === 'OAUTH_ERROR') {
-        const errorMessages = {
-          access_denied: 'Вы отменили авторизацию.',
-          oauth_failed:  'Ошибка авторизации. Попробуйте снова.',
-          parse_failed:  'Ошибка обработки ответа.',
-          no_token:      'Не удалось получить токен.',
-        };
-        toast.error(errorMessages[data.error] || 'Ошибка авторизации.');
-      }
-    };
-
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, [loginWithOAuth, navigate]);
-
-  const openPopup = (provider) => {
-    if (popupRef.current && !popupRef.current.closed) {
-      popupRef.current.focus();
-      return;
-    }
-
-    const url = `${API_URL.replace('/api', '')}/api/auth/${provider}`;
-    const width = 500, height = 620;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top  = window.screenY + (window.outerHeight - height) / 2;
-
-    const popup = window.open(
-      url,
-      `oauth_${provider}`,
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-
-    if (!popup || popup.closed) {
-      toast.error('Попап заблокирован браузером. Разрешите всплывающие окна для этого сайта.');
-      return;
-    }
-
-    popupRef.current = popup;
-    setLoading(provider);
-
-    // Следим — если пользователь вручную закрыл popup без авторизации
-    const timer = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(timer);
-        setLoading(prev => prev === provider ? null : prev);
-      }
-    }, 500);
-  };
-
-  return { openPopup, loading };
-}
-
-// ──────────────────────────────────────────────
-// Компонент кнопок
-// ──────────────────────────────────────────────
 export default function OAuthButtons() {
-  const { openPopup, loading } = useOAuthPopup();
-
-  const btnStyle = (disabled) => ({
+  const btnStyle = {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
     width: '100%', padding: '11px 14px',
     background: 'var(--surface)',
     border: '1px solid var(--border)',
     borderRadius: 10, fontSize: 14,
-    color: disabled ? 'var(--text-3)' : 'var(--text-1)',
-    cursor: disabled ? 'not-allowed' : 'pointer',
+    color: 'var(--text-1)',
+    cursor: 'pointer',
     fontFamily: 'DM Sans, sans-serif', fontWeight: 500,
     transition: 'border-color 0.2s, background 0.2s',
-    opacity: disabled ? 0.6 : 1,
-  });
+  };
 
-  const Spinner = () => (
-    <span style={{
-      width: 15, height: 15,
-      border: '2px solid var(--border)',
-      borderTopColor: 'var(--accent)',
-      borderRadius: '50%',
-      animation: 'rotateSlow 0.8s linear infinite',
-      display: 'block', flexShrink: 0,
-    }} />
-  );
+  const handleOAuth = (provider) => {
+    window.location.href = `${API_BASE}/api/auth/${provider}`;
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {/* Google */}
       <button
         type="button"
-        style={btnStyle(loading !== null)}
-        disabled={loading !== null}
-        onClick={() => openPopup('google')}
-        onMouseEnter={e => { if (!loading) e.currentTarget.style.borderColor = 'var(--accent)'; }}
-        onMouseLeave={e => { if (!loading) e.currentTarget.style.borderColor = 'var(--border)'; }}
+        style={btnStyle}
+        onClick={() => handleOAuth('google')}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
       >
-        {loading === 'google' ? <Spinner /> : <GoogleIcon />}
-        {loading === 'google' ? 'Подождите...' : 'Продолжить с Google'}
+        <GoogleIcon />
+        Продолжить с Google
       </button>
 
-      {/* GitHub */}
       <button
         type="button"
-        style={btnStyle(loading !== null)}
-        disabled={loading !== null}
-        onClick={() => openPopup('github')}
-        onMouseEnter={e => { if (!loading) e.currentTarget.style.borderColor = 'var(--accent)'; }}
-        onMouseLeave={e => { if (!loading) e.currentTarget.style.borderColor = 'var(--border)'; }}
+        style={btnStyle}
+        onClick={() => handleOAuth('github')}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
       >
-        {loading === 'github' ? <Spinner /> : <GithubIcon />}
-        {loading === 'github' ? 'Подождите...' : 'Продолжить с GitHub'}
+        <GithubIcon />
+        Продолжить с GitHub
       </button>
     </div>
   );
