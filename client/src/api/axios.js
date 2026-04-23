@@ -26,10 +26,17 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response;
       if (status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        const loginPath = (BASE_URL + 'login').replace('//', '/');
-        window.location.href = loginPath;
+        // Only clear session if the token that caused the 401 is still the
+        // current token. If it differs, OAuth completed while this request
+        // was in-flight — the stale 401 must not override the fresh session.
+        const usedToken = error.config?.headers?.Authorization?.replace('Bearer ', '');
+        const currentToken = localStorage.getItem('token');
+        if (usedToken && usedToken === currentToken) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          const loginPath = (BASE_URL + 'login').replace('//', '/');
+          window.location.href = loginPath;
+        }
       }
       return Promise.reject({
         message: data?.error || data?.message || 'Произошла ошибка',
