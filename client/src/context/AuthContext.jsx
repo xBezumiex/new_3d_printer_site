@@ -36,11 +36,16 @@ export const AuthProvider = ({ children }) => {
 
   // Загрузка данных текущего пользователя
   const loadUser = async () => {
+    const tokenAtStart = localStorage.getItem('token');
     try {
       const response = await authApi.getCurrentUser();
+      // If OAuth completed while we were loading, skip — fresh state already set
+      if (localStorage.getItem('token') !== tokenAtStart) return;
       setUser(response.data.user);
       setIsAuthenticated(true);
     } catch (error) {
+      // If OAuth completed while we were loading, ignore the stale error
+      if (localStorage.getItem('token') !== tokenAtStart) return;
       // Сетевая ошибка (сервер спит / нет интернета) — не разлогиниваем,
       // сохраняем кешированного пользователя из localStorage
       const isNetworkError = !error.status || error.status === 0;
