@@ -34,31 +34,38 @@ function useOAuthPopup() {
   const [loading, setLoading] = useState(null); // 'google' | 'github' | null
 
   useEffect(() => {
-    const channel = new BroadcastChannel('oauth_channel');
+    const handleStorage = async (e) => {
+      if (e.key !== 'oauth_result' || !e.newValue) return;
 
-    channel.onmessage = async (event) => {
+      // Remove immediately so it doesn't trigger again
+      localStorage.removeItem('oauth_result');
+
+      let data;
+      try { data = JSON.parse(e.newValue); } catch { return; }
+
       setLoading(null);
 
-      if (event.data.type === 'OAUTH_SUCCESS') {
+      if (data.type === 'OAUTH_SUCCESS') {
         try {
-          await loginWithOAuth(event.data.token, event.data.user);
-          toast.success(`Добро пожаловать, ${event.data.user?.name || ''}!`);
+          await loginWithOAuth(data.token, data.user);
+          toast.success(`Добро пожаловать, ${data.user?.name || ''}!`);
           navigate('/dashboard');
         } catch {
           toast.error('Ошибка входа. Попробуйте снова.');
         }
-      } else if (event.data.type === 'OAUTH_ERROR') {
+      } else if (data.type === 'OAUTH_ERROR') {
         const errorMessages = {
           access_denied: 'Вы отменили авторизацию.',
           oauth_failed:  'Ошибка авторизации. Попробуйте снова.',
           parse_failed:  'Ошибка обработки ответа.',
           no_token:      'Не удалось получить токен.',
         };
-        toast.error(errorMessages[event.data.error] || 'Ошибка авторизации.');
+        toast.error(errorMessages[data.error] || 'Ошибка авторизации.');
       }
     };
 
-    return () => channel.close();
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, [loginWithOAuth, navigate]);
 
   const openPopup = (provider) => {

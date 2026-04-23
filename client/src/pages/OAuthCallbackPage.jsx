@@ -7,23 +7,25 @@ export default function OAuthCallbackPage() {
     const user   = params.get('user');
     const error  = params.get('error');
 
-    const channel = new BroadcastChannel('oauth_channel');
-
+    let result;
     if (error) {
-      channel.postMessage({ type: 'OAUTH_ERROR', error });
+      result = { type: 'OAUTH_ERROR', error };
     } else if (token && user) {
       try {
         const parsedUser = JSON.parse(decodeURIComponent(user));
-        channel.postMessage({ type: 'OAUTH_SUCCESS', token, user: parsedUser });
+        result = { type: 'OAUTH_SUCCESS', token, user: parsedUser };
       } catch {
-        channel.postMessage({ type: 'OAUTH_ERROR', error: 'parse_failed' });
+        result = { type: 'OAUTH_ERROR', error: 'parse_failed' };
       }
     } else {
-      channel.postMessage({ type: 'OAUTH_ERROR', error: 'no_token' });
+      result = { type: 'OAUTH_ERROR', error: 'no_token' };
     }
 
-    channel.close();
-    window.close();
+    // localStorage storage event is guaranteed to fire in other windows/tabs
+    localStorage.setItem('oauth_result', JSON.stringify(result));
+
+    // Small delay so the storage event fires before the popup closes
+    setTimeout(() => window.close(), 300);
   }, []);
 
   return (
