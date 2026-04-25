@@ -34,21 +34,28 @@ export default function ContactPage() {
     if (!form.name || !form.email || !form.message) { toast.error('Заполните обязательные поля'); return; }
     setSending(true);
     try {
-      const res = await fetch('https://formsubmit.co/ajax/229376fa22d7946c5ec28c593ba81042', {
+      const fd = new FormData();
+      fd.append('name', form.name);
+      fd.append('email', form.email);
+      fd.append('phone', form.phone || 'не указан');
+      fd.append('message', form.message);
+      fd.append('_subject', `Новое сообщение с сайта 3D Print Lab от ${form.name}`);
+      fd.append('_captcha', 'false');
+      fd.append('_template', 'table');
+
+      const res = await fetch('https://formsubmit.co/229376fa22d7946c5ec28c593ba81042', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          name: form.name, email: form.email,
-          phone: form.phone || 'не указан', message: form.message,
-          _subject: `Новое сообщение с сайта 3D Print Lab от ${form.name}`,
-          _captcha: 'false',
-        }),
+        headers: { Accept: 'application/json' },
+        body: fd,
       });
-      const data = await res.json();
-      if (data.success === 'true' || data.success === true) {
+
+      if (res.ok) {
         setSent(true);
+        setForm({ name: '', email: '', phone: '', message: '' });
         toast.success('Сообщение отправлено!');
-      } else throw new Error('fail');
+      } else {
+        throw new Error(res.status);
+      }
     } catch {
       toast.error('Не удалось отправить. Напишите напрямую на ' + YOUR_EMAIL);
     } finally { setSending(false); }
