@@ -18,10 +18,10 @@ const HOURS = [
 
 const inputStyle = {
   width: '100%', padding: '12px 14px',
-  background: 'var(--glass-bg)', border: '1px solid var(--border-strong)',
-  color: 'var(--text-primary)', fontSize: 14, outline: 'none',
+  background: 'var(--surface)',
+  border: '1px solid var(--border-strong)',
+  color: 'var(--text-1)', fontSize: 14, outline: 'none',
   fontFamily: 'DM Sans, sans-serif',
-  backdropFilter: 'blur(8px)',
 };
 
 export default function ContactPage() {
@@ -34,7 +34,7 @@ export default function ContactPage() {
     if (!form.name || !form.email || !form.message) { toast.error('Заполните обязательные поля'); return; }
     setSending(true);
     try {
-      const res = await fetch(`https://formsubmit.co/ajax/${YOUR_EMAIL}`, {
+      const res = await fetch('https://formsubmit.co/ajax/229376fa22d7946c5ec28c593ba81042', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
