@@ -64,28 +64,61 @@ export const sendOrderConfirmation = async (user, order) => {
  */
 export const sendOrderNotificationToAdmin = async (user, order) => {
   try {
-    const ADMIN_EMAIL = process.env.SMTP_USER; // или отдельный email админа
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+
+    const MATERIAL_LABELS = { PLA: 'PLA', ABS: 'ABS', PETG: 'PETG', TPU: 'TPU', NYLON: 'Nylon' };
+    const QUALITY_LABELS  = { DRAFT: 'Черновик (0.3мм)', STANDARD: 'Стандарт (0.2мм)', HIGH: 'Высокое (0.1мм)', ULTRA: 'Ультра (0.05мм)' };
+
+    const modelSection = order.modelFile
+      ? `<div style="background:#fff3cd;border:1px solid #ffc107;padding:16px;border-radius:8px;margin:16px 0">
+           <p style="margin:0 0 8px;font-weight:bold;color:#856404">📎 Файл модели:</p>
+           <a href="${order.modelFile}" style="color:#0066cc;word-break:break-all;font-size:14px">${order.modelFile}</a>
+           <br><br>
+           <a href="${order.modelFile}" style="display:inline-block;background:#ffc107;color:#000;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">
+             ⬇️ Скачать модель
+           </a>
+         </div>`
+      : `<p style="color:#dc3545">⚠️ Файл модели не прикреплён</p>`;
 
     const mailOptions = {
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
-      subject: `🔔 Новый заказ #${order.orderNumber} - 3D Print Lab`,
+      subject: `🔔 Новый заказ #${order.orderNumber} от ${user.name} — 3D Print Lab`,
       html: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2 style="color: #3b82f6;">Новый заказ!</h2>
-          <p>Поступил новый заказ от <strong>${user.name}</strong></p>
+        <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto">
+          <div style="background:#3b82f6;padding:20px;border-radius:8px 8px 0 0">
+            <h2 style="color:#fff;margin:0">🖨️ Новый заказ #${order.orderNumber}</h2>
+          </div>
+          <div style="background:#f9fafb;padding:20px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
 
-          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
-            <h3 style="margin-top: 0;">Заказ #${order.orderNumber}</h3>
-            <p><strong>Клиент:</strong> ${user.name}</p>
-            <p><strong>Email:</strong> ${user.email}</p>
-            <p><strong>Телефон:</strong> ${user.phone || 'Не указан'}</p>
-            <hr>
-            <p><strong>Материал:</strong> ${order.material}</p>
-            <p><strong>Качество:</strong> ${order.quality}</p>
-            <p><strong>Количество:</strong> ${order.quantity} шт.</p>
-            <p><strong>Стоимость:</strong> ${order.price} ₽</p>
-            ${order.comments ? `<p><strong>Комментарий:</strong> ${order.comments}</p>` : ''}
+            <h3 style="margin-top:0;color:#374151">Клиент</h3>
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:6px 0;color:#6b7280;width:120px">Имя:</td><td><strong>${user.name}</strong></td></tr>
+              <tr><td style="padding:6px 0;color:#6b7280">Email:</td><td><a href="mailto:${user.email}" style="color:#3b82f6">${user.email}</a></td></tr>
+              <tr><td style="padding:6px 0;color:#6b7280">Телефон:</td><td>${user.phone || 'Не указан'}</td></tr>
+            </table>
+
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+
+            <h3 style="color:#374151">Параметры печати</h3>
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:6px 0;color:#6b7280;width:140px">Материал:</td><td><strong>${MATERIAL_LABELS[order.material] || order.material}</strong></td></tr>
+              <tr><td style="padding:6px 0;color:#6b7280">Качество:</td><td>${QUALITY_LABELS[order.quality] || order.quality}</td></tr>
+              <tr><td style="padding:6px 0;color:#6b7280">Заполнение:</td><td>${order.infill}%</td></tr>
+              <tr><td style="padding:6px 0;color:#6b7280">Количество:</td><td>${order.quantity} шт.</td></tr>
+              <tr><td style="padding:6px 0;color:#6b7280">Объём:</td><td>${order.volume} см³</td></tr>
+              <tr><td style="padding:6px 0;color:#6b7280">Вес:</td><td>${order.weight} г</td></tr>
+              <tr><td style="padding:6px 0;color:#6b7280">Стоимость:</td><td><strong style="color:#3b82f6;font-size:18px">${Number(order.price).toLocaleString('ru-RU')} ₽</strong></td></tr>
+            </table>
+
+            ${order.comments ? `<div style="background:#eff6ff;border-left:4px solid #3b82f6;padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0"><p style="margin:0;color:#374151"><strong>Комментарий клиента:</strong><br>${order.comments}</p></div>` : ''}
+
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+
+            <h3 style="color:#374151">Файл для печати</h3>
+            ${modelSection}
+
+            <p style="color:#9ca3af;font-size:12px;margin-top:24px">Заказ создан: ${new Date(order.createdAt).toLocaleString('ru-RU')}</p>
           </div>
         </div>
       `
