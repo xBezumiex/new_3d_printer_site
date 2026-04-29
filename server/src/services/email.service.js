@@ -2,7 +2,7 @@
 import transporter from '../config/email.js';
 import { AppError } from '../utils/errors.js';
 
-const FROM_EMAIL = process.env.EMAIL_FROM || '3D Print Lab <noreply@3dprintlab.com>';
+const FROM_EMAIL = process.env.EMAIL_FROM || `3D Print Lab <${process.env.SMTP_USER}>`;
 
 /**
  * Отправка email о новом заказе (клиенту)
