@@ -97,7 +97,7 @@ export default function AdminPage() {
   const loadStats = async () => {
     try {
       const data = await ordersApi.getOrdersStats();
-      setStats(data.data);
+      setStats(data.data?.stats || data.data);
     } catch {}
   };
 
