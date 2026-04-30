@@ -28,7 +28,7 @@ function Field({ label, error, children }) {
 export default function OrderForm() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { modelLoaded, modelData, calcParams, price, materials, qualities } = useModel();
+  const { modelLoaded, modelData, calcParams, price, materials, qualities, isUploading } = useModel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -60,10 +60,11 @@ export default function OrderForm() {
 
   const onSubmit = async (data) => {
     if (!modelLoaded) { toast.error('Сначала загрузите 3D модель'); return; }
+    if (isUploading) { toast.error('Подождите, файл загружается...'); return; }
     setIsSubmitting(true);
     try {
       await ordersApi.createOrder({
-        modelFile: modelData?.fileName || null,
+        modelFile: modelData?.fileUrl || modelData?.fileName || null,
         material: calcParams.material,
         quality: calcParams.quality,
         infill: calcParams.infill,
@@ -214,17 +215,19 @@ export default function OrderForm() {
           )}
         </div>
 
-        <button type="submit" disabled={!modelLoaded || isSubmitting}
+        <button type="submit" disabled={!modelLoaded || isSubmitting || isUploading}
           className="w-full flex items-center justify-center gap-2 font-sans font-semibold text-sm transition-all"
           style={{
             padding: '14px 0',
-            background: modelLoaded && !isSubmitting ? 'linear-gradient(135deg,var(--accent),#fb923c)' : 'var(--bg-raised)',
-            color: modelLoaded && !isSubmitting ? '#fff' : 'var(--text-muted)',
-            border: 'none', cursor: !modelLoaded || isSubmitting ? 'not-allowed' : 'pointer',
-            boxShadow: modelLoaded && !isSubmitting ? '0 4px 24px var(--accent-glow)' : 'none',
+            background: modelLoaded && !isSubmitting && !isUploading ? 'linear-gradient(135deg,var(--accent),#fb923c)' : 'var(--bg-raised)',
+            color: modelLoaded && !isSubmitting && !isUploading ? '#fff' : 'var(--text-muted)',
+            border: 'none', cursor: !modelLoaded || isSubmitting || isUploading ? 'not-allowed' : 'pointer',
+            boxShadow: modelLoaded && !isSubmitting && !isUploading ? '0 4px 24px var(--accent-glow)' : 'none',
           }}>
           {isSubmitting ? (
             <><div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Оформление...</>
+          ) : isUploading ? (
+            <><div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Загрузка файла...</>
           ) : (
             `Оформить заказ — ${finalPrice} ₽`
           )}

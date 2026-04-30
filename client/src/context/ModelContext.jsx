@@ -16,6 +16,7 @@ export const ModelProvider = ({ children }) => {
   const [modelData, setModelData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [calcParams, setCalcParams] = useState({
     material: 'PLA',
@@ -103,11 +104,13 @@ export const ModelProvider = ({ children }) => {
     setPrice(total.toFixed(2));
   };
 
-  // Сброс модели
+  const setFileUrl = (url) => setModelData(prev => prev ? { ...prev, fileUrl: url } : prev);
+
   const resetModel = () => {
     setModelLoaded(false);
     setModelData(null);
     setLoadError(null);
+    setIsUploading(false);
     setCalcParams((prev) => ({ ...prev, volume: 0, weight: 0 }));
   };
 
@@ -120,6 +123,9 @@ export const ModelProvider = ({ children }) => {
     price,
     materials,
     qualities,
+    isUploading,
+    setIsUploading,
+    setFileUrl,
     setModel,
     updateCalcParams,
     calculatePrice,

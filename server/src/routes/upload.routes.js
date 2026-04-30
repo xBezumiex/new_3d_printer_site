@@ -3,7 +3,7 @@ import express from 'express';
 import multer from 'multer';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import asyncHandler from '../utils/asyncHandler.js';
-import { uploadImageBuffer, uploadMultipleBuffers } from '../services/cloudinary.service.js';
+import { uploadImageBuffer, uploadMultipleBuffers, uploadRawBuffer } from '../services/cloudinary.service.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -15,6 +15,15 @@ const upload = multer({
 });
 
 const router = express.Router();
+
+const modelUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    const ext = file.originalname.split('.').pop().toLowerCase();
+    ['stl', 'obj', 'ply', 'gltf', 'glb'].includes(ext) ? cb(null, true) : cb(new Error('Только 3D-модели (STL, OBJ, PLY, GLTF, GLB)'));
+  },
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
 
 // POST /api/upload/image — одно изображение
 router.post('/image', authenticate, upload.single('image'), asyncHandler(async (req, res) => {
@@ -41,6 +50,16 @@ router.post('/images', authenticate, upload.array('images', 10), asyncHandler(as
   const urls = results.map(r => r.url);
 
   res.json({ status: 'success', data: { urls } });
+}));
+
+// POST /api/upload/model — 3D-модель (STL, OBJ, PLY, GLTF, GLB)
+router.post('/model', authenticate, modelUpload.single('model'), asyncHandler(async (req, res) => {
+  if (!req.file) return res.status(400).json({ status: 'fail', message: 'Файл не загружен' });
+  const result = await uploadRawBuffer(req.file.buffer, req.file.originalname);
+  res.json({
+    status: 'success',
+    data: { url: result.url, publicId: result.publicId, originalName: req.file.originalname },
+  });
 }));
 
 export default router;

@@ -12,7 +12,8 @@ const MAX_FILE_SIZE = import.meta.env.VITE_MAX_FILE_SIZE || 52428800;
 
 export default function ModelUploader() {
   const fileInputRef = useRef(null);
-  const { setModel, setIsLoading, setLoadError, isLoading, loadError } = useModel();
+  const { setModel, setIsLoading, setLoadError, isLoading, loadError, setIsUploading, setFileUrl } = useModel();
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
 
   const calculateVolumeAndWeight = (geometry, material, infill) => {
     let volume = 0;
@@ -45,6 +46,28 @@ export default function ModelUploader() {
     };
   };
 
+  const uploadToServer = async (file) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('model', file);
+      const res = await fetch(`${API_BASE}/api/upload/model`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.data?.url) setFileUrl(data.data.url);
+    } catch {
+      // upload failed silently — order will still save with filename only
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleModelLoaded = (object3d, file) => {
     let mesh;
     if (object3d.isMesh) {
@@ -65,6 +88,7 @@ export default function ModelUploader() {
     toast.success(`Модель "${file.name}" загружена!`);
     setIsLoading(false);
     setLoadError(null);
+    uploadToServer(file);
   };
 
   const handleFileUpload = (e) => {

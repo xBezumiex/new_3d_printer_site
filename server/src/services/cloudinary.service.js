@@ -35,6 +35,27 @@ export const uploadImageBuffer = async (buffer, mimeType, folder = '3d-print-lab
 };
 
 /**
+ * Загрузить произвольный файл (STL, OBJ и т.д.) из Buffer в Cloudinary
+ */
+export const uploadRawBuffer = async (buffer, filename, folder = '3d-print-lab/models') => {
+  try {
+    const base64 = buffer.toString('base64');
+    const dataUri = `data:application/octet-stream;base64,${base64}`;
+    const safeId = `${Date.now()}_${filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder,
+      resource_type: 'raw',
+      public_id: safeId,
+    });
+    return { url: result.secure_url, publicId: result.public_id };
+  } catch (error) {
+    const msg = error?.message || JSON.stringify(error);
+    console.error('Cloudinary raw upload error:', msg);
+    throw new AppError(`Cloudinary: ${msg}`, 500);
+  }
+};
+
+/**
  * Удалить файл из Cloudinary по publicId
  */
 export const deleteFile = async (publicId, resourceType = 'image') => {
