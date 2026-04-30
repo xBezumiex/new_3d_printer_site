@@ -49,12 +49,19 @@ export const sendOrderConfirmation = async (user, order) => {
 
 export const sendOrderNotificationToAdmin = async (user, order) => {
   try {
+    const isUrl = order.modelFile && /^https?:\/\//i.test(order.modelFile);
     const modelSection = order.modelFile
-      ? `<div style="background:#fff3cd;border:1px solid #ffc107;padding:16px;border-radius:8px;margin:16px 0">
-           <p style="margin:0 0 8px;font-weight:bold;color:#856404">📎 Файл модели:</p>
-           <a href="${order.modelFile}" style="color:#0066cc;word-break:break-all;font-size:13px">${order.modelFile}</a><br><br>
-           <a href="${order.modelFile}" style="display:inline-block;background:#ffc107;color:#000;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">⬇️ Скачать модель</a>
-         </div>`
+      ? isUrl
+        ? `<div style="background:#fff3cd;border:1px solid #ffc107;padding:16px;border-radius:8px;margin:16px 0">
+             <p style="margin:0 0 8px;font-weight:bold;color:#856404">📎 Файл модели:</p>
+             <a href="${order.modelFile}" style="color:#0066cc;word-break:break-all;font-size:13px">${order.modelFile}</a><br><br>
+             <a href="${order.modelFile}" style="display:inline-block;background:#ffc107;color:#000;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">⬇️ Скачать модель</a>
+           </div>`
+        : `<div style="background:#f3f4f6;border:1px solid #d1d5db;padding:16px;border-radius:8px;margin:16px 0">
+             <p style="margin:0 0 4px;font-weight:bold;color:#374151">📎 Файл модели:</p>
+             <p style="margin:0;color:#6b7280;font-size:13px">${order.modelFile}</p>
+             <p style="margin:8px 0 0;color:#9ca3af;font-size:12px">Клиент загрузил файл локально — запросите его отдельно.</p>
+           </div>`
       : `<p style="color:#dc3545">⚠️ Файл модели не прикреплён</p>`;
 
     await sendEmail({
