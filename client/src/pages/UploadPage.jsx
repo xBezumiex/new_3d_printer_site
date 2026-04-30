@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useModel } from '../context/ModelContext';
 import ModelUploader from '../components/model/ModelUploader';
 import ModelViewer from '../components/model/ModelViewer';
-import { Box, Ruler, Scale } from 'lucide-react';
+import { Box, Ruler, Scale, Calculator } from 'lucide-react';
 
 const VIEW_PRESETS = [
   { key: 'front',  label: 'Спереди' },
@@ -56,6 +57,21 @@ export default function UploadPage() {
           {/* Left: uploader + info */}
           <div className="space-y-4">
             <ModelUploader />
+
+            {modelLoaded && modelData && (
+              <Link to="/calculator"
+                className="flex items-center justify-center gap-3 w-full font-sans font-semibold text-sm transition-all"
+                style={{
+                  padding: '14px 0',
+                  background: 'linear-gradient(135deg,var(--accent),#fb923c)',
+                  color: '#fff',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 24px var(--accent-glow)',
+                }}>
+                <Calculator className="w-4 h-4" />
+                Рассчитать стоимость
+              </Link>
+            )}
 
             {modelLoaded && modelData && (
               <div className="glass p-5">
