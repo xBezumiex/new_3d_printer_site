@@ -182,7 +182,9 @@ export default function ModelUploader() {
         onMouseEnter={e => { if (!isLoading) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.background = 'rgba(255,77,0,0.04)'; }}}
         onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.background = 'var(--glass-bg)'; }}
       >
-        <input ref={fileInputRef} type="file" accept=".stl,.obj,.ply,.gltf,.glb" onChange={handleFileUpload} className="hidden" />
+        <input ref={fileInputRef} type="file"
+          accept=".stl,.obj,.ply,.gltf,.glb,model/stl,model/obj,model/ply,model/gltf+json,model/gltf-binary,application/octet-stream"
+          onChange={handleFileUpload} className="hidden" />
 
         <div className="flex flex-col items-center gap-3">
           <div className="w-14 h-14 flex items-center justify-center"
