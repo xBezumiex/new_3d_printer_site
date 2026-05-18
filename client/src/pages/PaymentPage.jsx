@@ -621,7 +621,7 @@ export default function PaymentPage() {
       sessionStorage.setItem(`payment_${orderId}`, paymentId);
       window.location.href = confirmationUrl;
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ошибка создания платежа');
+      toast.error(err.message || 'Ошибка создания платежа');
       setProcessing(false);
     }
   };
