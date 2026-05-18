@@ -25,6 +25,7 @@ import bookmarksRoutes from './routes/bookmarks.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
 import promoRoutes from './routes/promo.routes.js';
 import achievementsRoutes from './routes/achievements.routes.js';
+import paymentsRoutes from './routes/payments.routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -132,6 +133,7 @@ app.use('/api/bookmarks', bookmarksRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/promo', promoRoutes);
 app.use('/api/achievements', achievementsRoutes);
+app.use('/api/payments', paymentsRoutes);
 
 // ===================
 // Обработка ошибок

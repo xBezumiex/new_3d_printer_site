@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, Shield, CreditCard, Zap, Phone, Radio, Check, X, RefreshCw, ChevronRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import * as ordersApi from '../api/orders.api';
+import * as paymentsApi from '../api/payments.api';
 
 // ─── Helpers ───────────────────────────────────────────────
 const fmtCardNum = v => v.replace(/\D/g,'').slice(0,16).replace(/(\d{4})(?=\d)/g,'$1 ');
@@ -338,7 +340,7 @@ const inp = (focus) => ({
 });
 
 // ─── Card Form ──────────────────────────────────────────────
-function CardForm({ onSubmit }) {
+function CardForm({ onSubmit, loading }) {
   const [num,  setNum]   = useState('');
   const [exp,  setExp]   = useState('');
   const [cvv,  setCvv]   = useState('');
@@ -399,13 +401,13 @@ function CardForm({ onSubmit }) {
         />
       </div>
 
-      <PayBtn valid={valid} onClick={() => onSubmit()} />
+      <PayBtn valid={valid} loading={loading} onClick={() => onSubmit()} />
     </div>
   );
 }
 
 // ─── SBP Form ───────────────────────────────────────────────
-function SBPForm({ onSubmit }) {
+function SBPForm({ onSubmit, loading }) {
   const [bank, setBank] = useState(null);
   const [showQR, setShowQR] = useState(false);
 
@@ -462,13 +464,13 @@ function SBPForm({ onSubmit }) {
         </div>
       )}
 
-      <PayBtn valid={!!bank} onClick={() => onSubmit()} label={bank ? `Оплатить через ${bank.name}` : undefined} />
+      <PayBtn valid={!!bank} loading={loading} onClick={() => onSubmit()} label={bank ? `Оплатить через ${bank.name}` : undefined} />
     </div>
   );
 }
 
 // ─── Phone Form ─────────────────────────────────────────────
-function PhoneForm({ onSubmit }) {
+function PhoneForm({ onSubmit, loading }) {
   const [phone, setPhone] = useState('');
   const [focus, setFocus] = useState(false);
 
@@ -506,13 +508,13 @@ function PhoneForm({ onSubmit }) {
         </div>
       )}
 
-      <PayBtn valid={valid} onClick={() => onSubmit()} />
+      <PayBtn valid={valid} loading={loading} onClick={() => onSubmit()} />
     </div>
   );
 }
 
 // ─── Operator Form ──────────────────────────────────────────
-function OperatorForm({ onSubmit, price }) {
+function OperatorForm({ onSubmit, loading, price }) {
   const [op, setOp] = useState(null);
   const [phone, setPhone] = useState('');
   const [focus, setFocus] = useState(false);
@@ -565,27 +567,29 @@ function OperatorForm({ onSubmit, price }) {
         />
       </div>
 
-      <PayBtn valid={valid && !tooExpensive} onClick={() => onSubmit()} />
+      <PayBtn valid={valid && !tooExpensive} loading={loading} onClick={() => onSubmit()} />
     </div>
   );
 }
 
 // ─── Pay Button ─────────────────────────────────────────────
-function PayBtn({ valid, onClick, label }) {
+function PayBtn({ valid, onClick, label, loading }) {
+  const active = valid && !loading;
   return (
-    <button onClick={onClick} disabled={!valid} style={{
+    <button onClick={onClick} disabled={!active} style={{
       width:'100%', padding:'15px 0',
-      background: valid ? 'linear-gradient(135deg,var(--accent),#fb923c)' : 'var(--bg-raised)',
-      color: valid ? '#fff' : 'var(--text-muted)',
-      border:'none', borderRadius:12, cursor: valid ? 'pointer' : 'not-allowed',
+      background: active ? 'linear-gradient(135deg,var(--accent),#fb923c)' : 'var(--bg-raised)',
+      color: active ? '#fff' : 'var(--text-muted)',
+      border:'none', borderRadius:12, cursor: active ? 'pointer' : 'not-allowed',
       fontFamily:'DM Sans,sans-serif', fontWeight:600, fontSize:15,
-      boxShadow: valid ? '0 4px 24px var(--accent-glow)' : 'none',
+      boxShadow: active ? '0 4px 24px var(--accent-glow)' : 'none',
       transition:'all 0.2s',
       display:'flex',alignItems:'center',justifyContent:'center',gap:8,
     }}>
-      <Lock size={15} />
-      {label || 'Оплатить'}
-      <ChevronRight size={16} />
+      {loading
+        ? <><div className="w-4 h-4 border-2 rounded-full animate-spin" style={{borderColor:'rgba(255,255,255,0.3)',borderTopColor:'#fff'}}/> Переход к оплате...</>
+        : <><Lock size={15}/>{label || 'Оплатить'}<ChevronRight size={16}/></>
+      }
     </button>
   );
 }
@@ -599,8 +603,6 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState('card');
   const [processing, setProcessing] = useState(false);
-  const [step, setStep] = useState(0);
-  const [result, setResult] = useState(null);
 
   useEffect(() => {
     if (!orderId) { navigate('/dashboard'); return; }
@@ -610,25 +612,19 @@ export default function PaymentPage() {
       .finally(() => setLoading(false));
   }, [orderId, navigate]);
 
-  const runPayment = () => {
+  const runPayment = async () => {
     setProcessing(true);
-    setStep(0);
-    setResult(null);
-
-    const delays = [700, 900, 800, 600];
-    let s = 0;
-    const next = () => {
-      if (s < STEPS.length) {
-        setStep(s);
-        setTimeout(() => { s++; next(); }, delays[s] ?? 700);
-      } else {
-        setResult('success');
-      }
-    };
-    setTimeout(next, 300);
+    try {
+      const res = await paymentsApi.createPayment({ orderId, method });
+      const { confirmationUrl, paymentId } = res.data;
+      // Сохраняем paymentId — нужен на странице колбэка
+      sessionStorage.setItem(`payment_${orderId}`, paymentId);
+      window.location.href = confirmationUrl;
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Ошибка создания платежа');
+      setProcessing(false);
+    }
   };
-
-  const handleRetry = () => { setProcessing(false); setStep(0); setResult(null); };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{background:'var(--bg)'}}>
@@ -644,14 +640,6 @@ export default function PaymentPage() {
 
   return (
     <div style={{minHeight:'100vh',background:'var(--bg)',padding:'clamp(16px,4vw,40px) clamp(16px,4vw,24px)'}}>
-      {processing && (
-        <ProcessingOverlay
-          step={step} result={result}
-          onRetry={handleRetry}
-          orderId={orderId}
-        />
-      )}
-
       <div style={{maxWidth:500,margin:'0 auto'}}>
         {/* Header */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:28}}>
@@ -709,10 +697,10 @@ export default function PaymentPage() {
 
           {/* Active form */}
           <div style={{animation:'payment-fadein 0.3s ease'}}>
-            {method==='card'     && <CardForm    onSubmit={runPayment} />}
-            {method==='sbp'      && <SBPForm     onSubmit={runPayment} />}
-            {method==='phone'    && <PhoneForm   onSubmit={runPayment} />}
-            {method==='operator' && <OperatorForm onSubmit={runPayment} price={price} />}
+            {method==='card'     && <CardForm    onSubmit={runPayment} loading={processing} />}
+            {method==='sbp'      && <SBPForm     onSubmit={runPayment} loading={processing} />}
+            {method==='phone'    && <PhoneForm   onSubmit={runPayment} loading={processing} />}
+            {method==='operator' && <OperatorForm onSubmit={runPayment} loading={processing} price={price} />}
           </div>
 
           {/* Security note */}
