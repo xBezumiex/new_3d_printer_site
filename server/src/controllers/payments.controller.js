@@ -2,9 +2,9 @@ import { randomUUID } from 'crypto';
 import https from 'https';
 import prisma from '../config/database.js';
 
-const SHOP_ID    = process.env.YOOKASSA_SHOP_ID;
-const SECRET_KEY = process.env.YOOKASSA_SECRET_KEY;
-const FRONTEND   = process.env.FRONTEND_URL || 'http://localhost:5173';
+const SHOP_ID    = process.env.YOOKASSA_SHOP_ID    || '1361415';
+const SECRET_KEY = process.env.YOOKASSA_SECRET_KEY || 'test_pX6h-MlrmZnwmbzAeFEoHrcHUgD4x62h2canmVzKTBo';
+const FRONTEND   = process.env.FRONTEND_URL || 'https://new-3d-printer-site.vercel.app';
 
 // HTTP-клиент для ЮКассы (без внешних зависимостей, работает на любом Node)
 const yoo = (method, path, body) => new Promise((resolve, reject) => {
