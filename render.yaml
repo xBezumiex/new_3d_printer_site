@@ -20,7 +20,7 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: CLIENT_URL
-        value: https://xbezumiex.github.io
+        value: https://new-3d-printer-site.vercel.app
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -28,7 +28,11 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: https://xbezumiex.github.io/new_3d_printer_site
+        value: https://new-3d-printer-site.vercel.app
+      - key: YOOKASSA_SHOP_ID
+        value: 1361415
+      - key: YOOKASSA_SECRET_KEY
+        value: test_pX6h-MlrmZnwmbzAeFEoHrcHUgD4x62h2canmVzKTBo
       - key: GOOGLE_CLIENT_ID
         value: 692826386412-ut7akn2ham1hpkogt3jifc26u0lo1div.apps.googleusercontent.com
       - key: GOOGLE_CLIENT_SECRET
