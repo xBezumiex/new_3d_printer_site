@@ -46,6 +46,7 @@ const NotificationsPage    = lazy(() => import('./pages/NotificationsPage'));
 const ContactPage          = lazy(() => import('./pages/ContactPage'));
 const NotFoundPage         = lazy(() => import('./pages/NotFoundPage'));
 const OAuthCallbackPage    = lazy(() => import('./pages/OAuthCallbackPage'));
+const PaymentPage          = lazy(() => import('./pages/PaymentPage'));
 
 export default function AppRoutes() {
   return (
@@ -85,7 +86,8 @@ export default function AppRoutes() {
           <Route path="/order"     element={<ProtectedRoute><OrderPage /></ProtectedRoute>} />
           <Route path="/profile"   element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+          <Route path="/orders/:id"  element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+          <Route path="/payment/:orderId" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
           <Route path="/posts/create" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
 
           <Route path="/chat"          element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />

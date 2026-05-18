@@ -63,7 +63,7 @@ export default function OrderForm() {
     if (isUploading) { toast.error('Подождите, файл загружается...'); return; }
     setIsSubmitting(true);
     try {
-      await ordersApi.createOrder({
+      const result = await ordersApi.createOrder({
         modelFile: modelData?.fileUrl || modelData?.fileName || null,
         material: calcParams.material,
         quality: calcParams.quality,
@@ -75,9 +75,10 @@ export default function OrderForm() {
         promoCode: promoApplied?.code || null,
         comments: data.comments || null,
       });
+      const orderId = result?.data?.order?.id;
       setSubmitted(true);
-      toast.success('Заказ оформлен!');
-      setTimeout(() => navigate('/dashboard'), 2000);
+      toast.success('Заказ оформлен! Переход к оплате...');
+      setTimeout(() => orderId ? navigate(`/payment/${orderId}`) : navigate('/dashboard'), 1500);
     } catch (error) {
       toast.error(error.message || 'Ошибка при оформлении заказа');
     } finally {
@@ -93,8 +94,8 @@ export default function OrderForm() {
           <CheckCircle className="w-8 h-8" style={{ color: '#4ADE80' }} />
         </div>
         <h3 className="font-display tracking-widest text-2xl mb-3" style={{ color: 'var(--text-primary)' }}>ЗАКАЗ ОФОРМЛЕН</h3>
-        <p className="font-sans text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>Мы свяжемся с вами в ближайшее время</p>
-        <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>Переход в личный кабинет...</p>
+        <p className="font-sans text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>Заказ создан — переходим к оплате</p>
+        <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>Загрузка страницы оплаты...</p>
         <div className="flex justify-center mt-5">
           <div className="w-5 h-5 border-2 rounded-full animate-spin"
             style={{ borderColor: 'var(--border-strong)', borderTopColor: 'var(--accent)' }} />
